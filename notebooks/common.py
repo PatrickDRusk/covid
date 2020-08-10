@@ -1,8 +1,16 @@
+import datetime
+
 import numpy
 import pandas
 
 
+
 def load_data(earliest_date, latest_date):
+    if not latest_date:
+        latest_date = pandas.Period((datetime.datetime.now() - datetime.timedelta(hours=19)).date(),
+                                    freq='D')
+    print(f"Latest date = {str(latest_date)}")
+
     # Get the state metadata
     meta = pandas.read_csv('nyt_states_meta.csv')
     meta['Country'] = 'USA'
@@ -17,7 +25,8 @@ def load_data(earliest_date, latest_date):
     # Attach the live stats if the daily file has not yet rolled
     if len(nyt_stats_live) and (nyt_stats.Date.max() < nyt_stats_live.Date.max()):
         print("Pulling in live stats")
-        nyt_stats = pandas.concat([nyt_stats, nyt_stats_live], sort=True)
+        nyt_stats = pandas.concat([nyt_stats, nyt_stats_live], sort=False)
+        nyt_stats = nyt_stats.sort_values(['State', 'Date'])
         nyt_stats.index = list(range(len(nyt_stats)))
 
     # Improve the Massachusetts data by using the DateOfDeath.csv from MA site
@@ -60,8 +69,7 @@ def load_data(earliest_date, latest_date):
 
     # Set the index to state and date
     ct_stats = ct_stats[ct_stats.Date >= earliest_date]
-    if latest_date:
-        ct_stats = ct_stats[ct_stats.Date <= latest_date]
+    ct_stats = ct_stats[ct_stats.Date <= latest_date]
     ct_stats = ct_stats.set_index(['ST', 'Date'])
 
     # Pull in the statistics for states
@@ -76,12 +84,22 @@ def load_data(earliest_date, latest_date):
     ct_tx = ct_tx.asof(nyt_range).fillna(method='ffill').fillna(0.)
     nyt_stats.loc[nyt_tx.index, 'Deaths'] = ct_tx.values
 
+    # Smooth series that might not be reported daily in some states
+    ct_stats.Pos = smooth_series(ct_stats.Pos)
+    ct_stats.Neg = smooth_series(ct_stats.Neg)
+    ct_stats['Tests'] = ct_stats.Pos + ct_stats.Neg
+    nyt_stats.Deaths = smooth_series(nyt_stats.Deaths)
+
     # Correct for various jumps in the data
     STATE_ADJUSTMENTS = (
         ('Colorado', -29, '2020-04-25'),
         ('New Jersey', 1854, '2020-06-25'),
         ('New Jersey', -54, '2020-07-22'),
+        ('New Jersey', -38, '2020-07-29'),
+        ('New Jersey', -25, '2020-08-05'),
+        ('New York', 125, '2020-04-05'),
         ('New York', 608, '2020-06-30'),  # most apparently happened at least three weeks earlier
+        ('New York', -146, '2020-08-06'),
         ('Illinois', 123, '2020-06-08'),
         ('Michigan', 220, '2020-06-05'),
         ('Delaware', 47, '2020-07-24'),
@@ -91,7 +109,8 @@ def load_data(earliest_date, latest_date):
     )
 
     for state, deaths, deaths_date in STATE_ADJUSTMENTS:
-        spread_deaths(nyt_stats, state, deaths, deaths_date)
+        if pandas.Period(deaths_date) <= latest_date:
+            spread_deaths(nyt_stats, state, deaths, deaths_date)
 
     return meta, nyt_stats, ct_stats
 
@@ -132,3 +151,61 @@ def spread_deaths(stats, state, num_deaths, deaths_date, realloc_end_date=None):
     stats.loc[indices, 'Deaths'] += st.CumAdj
 
 
+def smooth_series(s):
+    """
+    Iterate through a series, determining if a value remains stale for a number of days,
+    then jumps more than one once it changes. When this happens, spread that jump over
+    the number of stale days.
+    """
+    i = 0
+    last_i = None
+    last_val = None
+    run_length = 0
+    foo = s.copy()
+    while i < len(foo):
+        val = foo[i]
+        if pandas.isna(val):
+            last_i, last_val = i, None
+            run_length = 0
+        elif last_val is None:
+            last_i, last_val = i, val
+            run_length = 1
+        elif val == last_val:
+            run_length += 1
+        #elif (val == (last_val + 1)) or (run_length == 1):
+        elif run_length == 1:
+            last_i, last_val = i, val
+            run_length = 1
+        elif val < last_val:
+            # This almost certainly means we have moved onto a new state, so reset
+            last_i, last_val = i, val
+            run_length = 1
+        else:
+            # print(last_val, val, run_length)
+            run_length += 1
+            new_vals = numpy.linspace(last_val, val, run_length)
+            foo[last_i:i+1] = new_vals
+            last_i, last_val = i, val
+            run_length = 1
+        i += 1
+
+    return foo
+
+
+def calc_mid_weekly_average(s):
+    # Calculate daily trailing 7-day averages
+    daily = (s - s.shift())
+    trailing7 = (s - s.shift(7)) / 7
+
+    # Convert into central 7-day mean, with special handling for last three days
+    specs = (
+        (8., numpy.array([1., 1., 1.1, 1.2, 1.4, 1.2, 1.1])),
+        (9., numpy.array([1., 1.1, 1.1, 1.2, 1.4, 1.7, 1.5])),
+        (10., numpy.array([1., 1.1, 1.2, 1.3, 1.4, 1.8, 2.2])),
+    )
+    mid7 = trailing7.shift(-3).copy()
+    dailies = daily.iloc[-7:].values
+    vals = [((dailies * factors).sum() / divisor) for divisor, factors in specs]
+    mid7.iloc[-3:] = vals
+
+    return daily, mid7
