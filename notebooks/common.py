@@ -9,7 +9,6 @@ def load_data(earliest_date, latest_date):
     if not latest_date:
         latest_date = pandas.Period((datetime.datetime.now() - datetime.timedelta(hours=19)).date(),
                                     freq='D')
-    print(f"Latest date = {str(latest_date)}")
 
     # Get the state metadata
     meta = pandas.read_csv('nyt_states_meta.csv')
@@ -112,7 +111,7 @@ def load_data(earliest_date, latest_date):
         if pandas.Period(deaths_date) <= latest_date:
             spread_deaths(nyt_stats, state, deaths, deaths_date)
 
-    return meta, nyt_stats, ct_stats
+    return latest_date, meta, nyt_stats, ct_stats
 
     
 def read_nyt_csv(uri, meta, earliest_date, latest_date):
