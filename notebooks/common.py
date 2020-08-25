@@ -4,7 +4,6 @@ import numpy
 import pandas
 
 
-
 def load_data(earliest_date, latest_date):
     if not latest_date:
         latest_date = pandas.Period((datetime.datetime.now() - datetime.timedelta(hours=19)).date(),
@@ -41,8 +40,8 @@ def load_data(earliest_date, latest_date):
     ma = ma[(ma.Date >= earliest_date) & (ma.Date <= cutoff_date)]
     ma = ma.set_index('Date').sort_index()[['Deaths']]
     extra_dates = pandas.period_range(end=cur_date, periods=days, freq='D')
-    avg_deaths = (ma.loc[cutoff_date].Deaths - ma.loc[cutoff_date-5].Deaths) / 5
-    new_deaths = [ma.Deaths[-1] + (avg_deaths * (i+1)) for i in range(days)]
+    avg_deaths = (ma.loc[cutoff_date].Deaths - ma.loc[cutoff_date - 5].Deaths) / 5
+    new_deaths = [ma.Deaths[-1] + (avg_deaths * (i + 1)) for i in range(days)]
     ma = pandas.concat([ma, pandas.DataFrame(new_deaths, index=extra_dates, columns=['Deaths'])])
 
     indices = nyt_stats[nyt_stats.State == 'Massachusetts'].index.copy()
@@ -91,20 +90,29 @@ def load_data(earliest_date, latest_date):
 
     # Correct for various jumps in the data
     STATE_ADJUSTMENTS = (
+        ('Alabama', -20, '2020-04-23'),
+        ('Arizona', 45, '2020-05-08'),
         ('Colorado', -29, '2020-04-25'),
+        ('Delaware', 34, '2020-06-22'),
+        ('Delaware', 33, '2020-06-23'),
+        ('Delaware', 47, '2020-07-24'),
+        ('Illinois', 123, '2020-06-08'),
+        ('Indiana', 11, '2020-07-03'),
+        ('Maryland', 68, '2020-04-15'),
+        ('Michigan', 220, '2020-06-05'),
         ('New Jersey', 1854, '2020-06-25'),
         ('New Jersey', -54, '2020-07-22'),
         ('New Jersey', -38, '2020-07-29'),
         ('New Jersey', -25, '2020-08-05'),
-        ('New York', 125, '2020-04-05'),
         ('New York', 608, '2020-06-30'),  # most apparently happened at least three weeks earlier
-        ('New York', -146, '2020-08-06'),
-        ('Illinois', 123, '2020-06-08'),
-        ('Michigan', 220, '2020-06-05'),
-        ('Delaware', 47, '2020-07-24'),
+        ('New York', -113, '2020-08-06'),
+        ('South Carolina', 37, '2020-07-16'),
+        ('Tennessee', 16, '2020-06-12'),
         ('Texas', 636, '2020-07-27'),
         ('Washington', -7, '2020-06-17'),
+        ('Washington', 17, '2020-06-18'),
         ('Washington', 30, '2020-07-24'),
+        ('Wisconsin', 8, '2020-06-10'),
     )
 
     for state, deaths, deaths_date in STATE_ADJUSTMENTS:
@@ -113,7 +121,7 @@ def load_data(earliest_date, latest_date):
 
     return latest_date, meta, nyt_stats, ct_stats
 
-    
+
 def read_nyt_csv(uri, meta, earliest_date, latest_date):
     stats = pandas.read_csv(uri)
     stats = stats[stats.state.isin(meta.State)][['date', 'state', 'deaths']]
@@ -133,21 +141,17 @@ def read_nyt_csv(uri, meta, earliest_date, latest_date):
     return stats.reset_index()
 
 
-def spread_deaths(stats, state, num_deaths, deaths_date, realloc_end_date=None):
-    realloc_end_date = realloc_end_date or deaths_date
-    st = stats[(stats.State == state) & (stats.Date <= deaths_date)]
+def spread_deaths(stats, state, num_deaths, deaths_date):
+    st = stats[(stats.State == state) & (stats.Date <= deaths_date)][['Date', 'State', 'Deaths']].copy()
     indices = st.index.copy()
     st = st.set_index('Date')[['Deaths']].copy()
     orig_total = st.loc[deaths_date, 'Deaths']
     st.loc[deaths_date, 'Deaths'] -= num_deaths
     new_total = st.loc[deaths_date, 'Deaths']
-    st['Daily'] = st.Deaths - st.shift(1).Deaths
-    st['DailyAdj'] = (st.Daily * (orig_total / new_total)) - st.Daily
-    st['CumAdj'] = st.DailyAdj.sort_index().cumsum().sort_index()
-    st.loc[deaths_date, 'CumAdj'] = 0.
+    st['DeathsAdj'] = st.Deaths * (orig_total / new_total)
     st = st.reset_index()
     st.index = indices
-    stats.loc[indices, 'Deaths'] += st.CumAdj
+    stats.loc[indices, 'Deaths'] = st.DeathsAdj
 
 
 def smooth_series(s):
@@ -171,7 +175,7 @@ def smooth_series(s):
             run_length = 1
         elif val == last_val:
             run_length += 1
-        #elif (val == (last_val + 1)) or (run_length == 1):
+        # elif (val == (last_val + 1)) or (run_length == 1):
         elif run_length == 1:
             last_i, last_val = i, val
             run_length = 1
@@ -183,7 +187,7 @@ def smooth_series(s):
             # print(last_val, val, run_length)
             run_length += 1
             new_vals = numpy.linspace(last_val, val, run_length)
-            foo[last_i:i+1] = new_vals
+            foo[last_i:i + 1] = new_vals
             last_i, last_val = i, val
             run_length = 1
         i += 1
