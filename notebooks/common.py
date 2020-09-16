@@ -30,7 +30,7 @@ def load_data(earliest_date, latest_date):
     # Improve the Massachusetts data by using the DateOfDeath.csv from MA site
     # Since the latest MA data is very incomplete, replace the most recent three days with
     # the average from the prior five days
-    days = 3
+    days = 4
     cur_date = pandas.Period(nyt_stats.Date.max(), freq='D')
     cutoff_date = cur_date - days
     ma = pandas.read_csv('DateOfDeath.csv').iloc[:, [0, 2, 4]]
@@ -54,8 +54,7 @@ def load_data(earliest_date, latest_date):
     ct_stats = pandas.read_csv('https://covidtracking.com/api/v1/states/daily.csv')
 
     # Remove territories
-    ct_stats = ct_stats[~ct_stats.state.isin(['AS', 'GU', 'MP', 'PR', 'VI'])]
-
+    ct_stats = ct_stats[~ct_stats.state.isin(['AS', 'GU', 'MP', 'PR', 'VI'])].copy()
     ct_stats.date = [pandas.Period(str(v)) for v in ct_stats.date]
 
     # Remember Texas deaths
@@ -89,9 +88,10 @@ def load_data(earliest_date, latest_date):
     nyt_stats.Deaths = smooth_series(nyt_stats.Deaths)
 
     # Correct for various jumps in the data
-    STATE_ADJUSTMENTS = (
+    STATE_DEATH_ADJUSTMENTS = (
         ('Alabama', -20, '2020-04-23'),
         ('Arizona', 45, '2020-05-08'),
+        ('Arkansas', 143, '2020-09-15'),
         ('Colorado', -29, '2020-04-25'),
         ('Delaware', 34, '2020-06-22'),
         ('Delaware', 33, '2020-06-23'),
@@ -104,8 +104,11 @@ def load_data(earliest_date, latest_date):
         ('New Jersey', -54, '2020-07-22'),
         ('New Jersey', -38, '2020-07-29'),
         ('New Jersey', -25, '2020-08-05'),
+        ('New Jersey', -39, '2020-08-27'),
         ('New York', 608, '2020-06-30'),  # most apparently happened at least three weeks earlier
         ('New York', -113, '2020-08-06'),
+        ('New York', -113, '2020-08-06'),
+        ('New York', -11, '2020-09-09'),
         ('South Carolina', 37, '2020-07-16'),
         ('Tennessee', 16, '2020-06-12'),
         ('Texas', 636, '2020-07-27'),
@@ -115,9 +118,18 @@ def load_data(earliest_date, latest_date):
         ('Wisconsin', 8, '2020-06-10'),
     )
 
-    for state, deaths, deaths_date in STATE_ADJUSTMENTS:
+    for state, deaths, deaths_date in STATE_DEATH_ADJUSTMENTS:
         if pandas.Period(deaths_date) <= latest_date:
             spread_deaths(nyt_stats, state, deaths, deaths_date)
+
+    # Correct for various jumps in the data
+    STATE_CASE_ADJUSTMENTS = (
+        ('Massachusetts', -8057, '2020-09-02'),
+    )
+
+    for state, cases, cases_date in STATE_CASE_ADJUSTMENTS:
+        if pandas.Period(cases_date) <= latest_date:
+            spread_deaths(ct_stats, state, cases, cases_date, col='Pos')
 
     return latest_date, meta, nyt_stats, ct_stats
 
@@ -141,17 +153,17 @@ def read_nyt_csv(uri, meta, earliest_date, latest_date):
     return stats.reset_index()
 
 
-def spread_deaths(stats, state, num_deaths, deaths_date):
-    st = stats[(stats.State == state) & (stats.Date <= deaths_date)][['Date', 'State', 'Deaths']].copy()
+def spread_deaths(stats, state, num_deaths, deaths_date, col='Deaths'):
+    st = stats[(stats.State == state) & (stats.Date <= deaths_date)][['Date', 'State', col]].copy()
     indices = st.index.copy()
-    st = st.set_index('Date')[['Deaths']].copy()
-    orig_total = st.loc[deaths_date, 'Deaths']
-    st.loc[deaths_date, 'Deaths'] -= num_deaths
-    new_total = st.loc[deaths_date, 'Deaths']
-    st['DeathsAdj'] = st.Deaths * (orig_total / new_total)
+    st = st.set_index('Date')[[col]].copy()
+    orig_total = st.loc[deaths_date, col]
+    st.loc[deaths_date, col] -= num_deaths
+    new_total = st.loc[deaths_date, col]
+    st['StatAdj'] = st[col] * (orig_total / new_total)
     st = st.reset_index()
     st.index = indices
-    stats.loc[indices, 'Deaths'] = st.DeathsAdj
+    stats.loc[indices, col] = st.StatAdj
 
 
 def smooth_series(s):
@@ -166,7 +178,7 @@ def smooth_series(s):
     run_length = 0
     foo = s.copy()
     while i < len(foo):
-        val = foo[i]
+        val = foo.iloc[i]
         if pandas.isna(val):
             last_i, last_val = i, None
             run_length = 0
@@ -187,7 +199,7 @@ def smooth_series(s):
             # print(last_val, val, run_length)
             run_length += 1
             new_vals = numpy.linspace(last_val, val, run_length)
-            foo[last_i:i + 1] = new_vals
+            foo.iloc[last_i:i + 1] = new_vals
             last_i, last_val = i, val
             run_length = 1
         i += 1
@@ -202,9 +214,9 @@ def calc_mid_weekly_average(s):
 
     # Convert into central 7-day mean, with special handling for last three days
     specs = (
-        (8., numpy.array([1., 1., 1.1, 1.2, 1.4, 1.2, 1.1])),
-        (9., numpy.array([1., 1.1, 1.1, 1.2, 1.4, 1.7, 1.5])),
-        (10., numpy.array([1., 1.1, 1.2, 1.3, 1.4, 1.8, 2.2])),
+        (7.4, numpy.array([0.9, 1.0, 1.0, 1.0, 1.3, 1.1, 1.1])),
+        (7.3, numpy.array([0.9, 0.9, 1.0, 1.0, 1.1, 1.3, 1.1])),
+        (7.2, numpy.array([0.9, 0.9, 0.9, 1.0, 1.1, 1.1, 1.3])),
     )
     mid7 = trailing7.shift(-3).copy()
     dailies = daily.iloc[-7:].values
@@ -212,3 +224,59 @@ def calc_mid_weekly_average(s):
     mid7.iloc[-3:] = vals
 
     return daily, mid7
+
+
+def calc_state_stats(state, state_stats, meta):
+    st = state_stats.groupby('Date').sum().sort_index().copy()
+
+    st['ST'] = state
+    for col in list(meta.columns):
+        st[col] = meta.loc[state][col]
+
+    # Smooth series that might not be reported daily in some states
+    st.Pos = smooth_series(st.Pos)
+    st.Deaths = smooth_series(st.Deaths)
+
+    # Prep for 7-day smoothing calculations
+    st['Confirms'], st['Confirms7'] = calc_mid_weekly_average(st.Pos)
+    st['Daily'], st['Deaths7'] = calc_mid_weekly_average(st.Deaths)
+    st['DTests'], st['DTests7'] = calc_mid_weekly_average(st.Tests)
+
+    return st.reset_index().set_index(['ST', 'Date']).copy()
+
+
+def get_infections_df(states, death_lag, ifr_high, ifr_low, incubation, infectious,
+                      max_confirmed_ratio=0.7):
+    new_states = []
+    for state in states:
+        state = state.copy()
+
+        # Calculate the IFR to apply for each day
+        ifr = pandas.Series(numpy.linspace(ifr_high, ifr_low, len(state)), index=state.index)
+        # Calculate the infections in the past
+        infections = state.shift(-death_lag).Deaths7 / ifr
+        
+        # Calculate the min infections based on max_confirmed_ratio
+        min_infections = state.Confirms7 / max_confirmed_ratio
+        infections = infections.combine(min_infections, max, 0)
+
+        # Find out the ratio of infections that were detected on the last date in the past
+        last_date = infections.index[-(death_lag+1)]
+        last_ratio = infections.loc[last_date] / (state.loc[last_date, 'Confirms7'] + 1)
+
+        # Apply that ratio to the dates since that date
+        infections.iloc[-death_lag:] = state.Confirms7.iloc[-death_lag:] * last_ratio
+
+        state['DPerM'] = state.Deaths7 / state.Pop
+        state['NewInf'] = infections
+        state['NIPerM'] = state.NewInf / state.Pop
+        state['TotInf'] = infections.cumsum()
+        state['ActInf'] = infections.rolling(infectious).sum().shift(incubation)
+        state['ActKnown'] = state.Confirms7.rolling(infectious).sum()
+        state['ActUnk'] = state.ActInf - state.ActKnown
+        state['AIPer1000'] = state.ActInf / state.Pop / 1000.
+        state['AUPer1000'] = state.ActUnk / state.Pop / 1000.
+        state['PctFound'] = state.Confirms7 / (state.NewInf + 1)
+        new_states.append(state)
+
+    return pandas.concat(new_states)
