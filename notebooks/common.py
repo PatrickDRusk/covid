@@ -4,10 +4,35 @@ import numpy
 import pandas
 
 
+SMOOTH_CONFIGS = dict(
+    Standard=
+        dict(
+            DaysOfWeek = ('W-SUN', 'W-MON'),
+            Holidays = (
+                '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
+                '07-03-2020', '07-04-2020', # Independence Day
+                '09-05-2020', '09-08-2020', '09-09-2020',  # Labor Day
+            )
+        )
+)
+
+SMOOTH_DATES = dict()
+
+SMOOTH_MAPS = dict(
+    Standard=('AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI',
+       'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MD', 'ME', 'MI', 'MN',
+       'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH', 'NJ', 'NM', 'NV', 'OH',
+       'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VA', 'VT', 'WA',
+       'WI', 'WV', 'WY')
+)
+
+
 def load_data(earliest_date, latest_date):
     if not latest_date:
         latest_date = pandas.Period((datetime.datetime.now() - datetime.timedelta(hours=19)).date(),
                                     freq='D')
+
+    create_smooth_dates(earliest_date, latest_date)
 
     # Get the state metadata
     meta = pandas.read_csv('nyt_states_meta.csv')
@@ -81,6 +106,10 @@ def load_data(earliest_date, latest_date):
     ct_tx = ct_tx.asof(nyt_range).fillna(method='ffill').fillna(0.)
     nyt_stats.loc[nyt_tx.index, 'Deaths'] = ct_tx.values
 
+    # Blank out and forward fill entries for days with wimpy reporting
+    # dates = find_smooth_dates(
+    
+    
     # Smooth series that might not be reported daily in some states
     ct_stats.Pos = smooth_series(ct_stats.Pos)
     ct_stats.Neg = smooth_series(ct_stats.Neg)
@@ -132,6 +161,43 @@ def load_data(earliest_date, latest_date):
             spread_deaths(ct_stats, state, cases, cases_date, col='Pos')
 
     return latest_date, meta, nyt_stats, ct_stats
+
+
+def create_smooth_dates(earliest_date, latest_date):
+    sd = str(earliest_date)
+    ed = str(latest_date)
+    all_dates = pandas.date_range(start=sd, end=ed, freq='D')
+
+    for k, cfg in SMOOTH_CONFIGS.items():
+        # Start empty
+        dates = pandas.DatetimeIndex([], freq='D')
+        
+        # Compile date ranges excluding certain days of the week
+        for dow in cfg['DaysOfWeek']:
+            dates = dates.union(pandas.date_range(start=sd, end=ed, freq=dow))
+        
+        # Add the holidays (and some surrounding days sometimes)
+        holidays = cfg.get('Holidays', [])
+        if len(holidays):
+            dates = dates.union(pandas.DatetimeIndex(holidays))
+        
+        # Make sure that there is at least one non-excluded day at the end
+        for i in range(1, len(dates)):
+            if dates[-i] != all_dates[-i]:
+                break
+        if i > 1:
+            i -= 1
+            print(f"Keeping date(s) {list(dates[-i:])}")
+            dates = dates[:-i].copy()
+
+        SMOOTH_DATES[k] = dates
+
+
+def find_smooth_dates(st):
+    for k, states in SMOOTH_MAPS.items():
+        if st in states:
+            return SMOOTH_DATES[k]
+    return None
 
 
 def read_nyt_csv(uri, meta, earliest_date, latest_date):
