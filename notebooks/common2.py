@@ -397,14 +397,16 @@ def calc_state_stats(state, state_stats, meta, latest_date):
     return st.reset_index().set_index(['ST', 'Date']).copy()
 
 
-def get_infections_df(states, death_lag, ifr_high, ifr_low, incubation, infectious,
+def get_infections_df(states, death_lag, ifr_start, ifr_end, ifr_breaks, incubation, infectious,
                       max_confirmed_ratio=0.7):
+    ifr_breaks = [] if ifr_breaks is None else ifr_breaks
     new_states = []
     for state in states:
         state = state.copy()
 
         # Calculate the IFR to apply for each day
-        ifr = pandas.Series(numpy.linspace(ifr_high, ifr_low, len(state)), index=state.index)
+        ifr = _calc_ifr(state, ifr_start, ifr_end, ifr_breaks)
+        # ifr = pandas.Series(numpy.linspace(ifr_high, ifr_low, len(state)), index=state.index)
         # Calculate the infections in the past
         infections = state.shift(-death_lag).Deaths7 / ifr
         
@@ -432,3 +434,21 @@ def get_infections_df(states, death_lag, ifr_high, ifr_low, incubation, infectio
         new_states.append(state)
 
     return pandas.concat(new_states)
+
+
+def _calc_ifr(state, ifr_start, ifr_end, ifr_breaks):
+    st, start = state.index[0]
+    spans = []
+    start_amt = ifr_start
+    for end, end_amt in ifr_breaks:
+        end = pandas.Period(end, 'D')
+        idx = pandas.period_range(start=start, end=end, freq='D')
+        spans.append(pandas.Series(numpy.linspace(start_amt, end_amt, len(idx)), index=idx).iloc[0:-1])
+        start, start_amt = end, end_amt
+
+    st, end = state.index[-1]
+    idx = pandas.period_range(start=start, end=end, freq='D')
+    spans.append(pandas.Series(numpy.linspace(start_amt, ifr_end, len(idx)), index=idx))
+    span = pandas.concat(spans)
+    span = pandas.Series(span.values, index=state.index)
+    return span
