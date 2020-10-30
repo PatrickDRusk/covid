@@ -1,4 +1,5 @@
 import datetime
+import math
 
 import numpy
 import pandas
@@ -397,15 +398,24 @@ def calc_state_stats(state, state_stats, meta, latest_date):
     return st.reset_index().set_index(['ST', 'Date']).copy()
 
 
-def get_infections_df(states, death_lag, ifr_start, ifr_end, ifr_breaks, incubation, infectious,
+def get_infections_df(states, meta, death_lag, ifr_start, ifr_end, ifr_breaks, incubation, infectious,
                       max_confirmed_ratio=0.7):
+    meta = meta.set_index('ST')
+    avg_nursing = (meta.Nursing.sum() / meta.Pop.sum())
+
     ifr_breaks = [] if ifr_breaks is None else ifr_breaks
     new_states = []
     for state in states:
         state = state.copy()
 
+        st = state.reset_index().iloc[0, 0]
+        st_meta = meta.loc[st]
+        st_nursing = st_meta.Nursing / st_meta.Pop
+        nursing_factor = math.sqrt(st_nursing / avg_nursing)
+        # print(f'{st=} {avg_nursing=} {st_nursing=} {nursing_factor=}')
+
         # Calculate the IFR to apply for each day
-        ifr = _calc_ifr(state, ifr_start, ifr_end, ifr_breaks)
+        ifr = _calc_ifr(state, ifr_start, ifr_end, ifr_breaks) * nursing_factor
         # ifr = pandas.Series(numpy.linspace(ifr_high, ifr_low, len(state)), index=state.index)
         # Calculate the infections in the past
         infections = state.shift(-death_lag).Deaths7 / ifr
