@@ -126,10 +126,11 @@ def load_data(earliest_date, latest_date):
     days = 4
     cur_date = pandas.Period(nyt_stats.Date.max(), freq='D')
     cutoff_date = cur_date - days
-    ma = pandas.read_csv('DateOfDeath.csv').iloc[:, [0, 2, 4]]
+    # ma = pandas.read_csv('DateOfDeath.csv').iloc[:, [0, 2, 4]]
+    ma = pandas.read_excel('DateOfDeath.xlsx').iloc[:, [0, 2, 4]]
     ma.columns = ['Date', 'Confirmed', 'Probable']
     ma['Deaths'] = ma.Confirmed + ma.Probable
-    ma.Date = [pandas.Period(str(v)) for v in ma.Date]
+    ma.Date = [pandas.Period(str(v), freq='D') for v in ma.Date]
     ma = ma[(ma.Date >= earliest_date) & (ma.Date <= cutoff_date)]
     ma = ma.set_index('Date').sort_index()[['Deaths']]
     extra_dates = pandas.period_range(end=cur_date, periods=days, freq='D')
@@ -324,6 +325,7 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         ('CO', -29, '2020-04-25'),
         ('DE', 67, '2020-06-23'),
         ('DE', 47, '2020-07-24'),
+        ('GA', 450, '2020-11-04'),
         ('IL', 123, '2020-06-08'),
         ('IN', 11, '2020-07-03'),
         ('LA', 40, '2020-04-14'),
@@ -348,6 +350,7 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         ('SC', 37, '2020-07-16'),
         ('TN', 16, '2020-06-12'),
         ('TX', 636, '2020-07-27'),
+        ('VA', 60, '2020-09-15'),
         ('WA', -12, '2020-06-17'),
         ('WA', 7, '2020-06-18'),
         ('WA', 30, '2020-07-24'),
@@ -362,15 +365,26 @@ def calc_state_stats(state, state_stats, meta, latest_date):
             spread_deaths(st, state_, deaths, deaths_date)
 
     # Correct for various jumps in the data
-    STATE_CASE_ADJUSTMENTS = (
+    STATE_POS_ADJUSTMENTS = (
         ('MA', -8057, '2020-09-02'),
     )
 
-    for state_, cases, cases_date in STATE_CASE_ADJUSTMENTS:
+    for state_, cases, cases_date in STATE_POS_ADJUSTMENTS:
         if state_ != state:
             continue
         if pandas.Period(cases_date) <= latest_date:
             spread_deaths(st, state_, cases, cases_date, col='Pos')
+
+    # Correct for various jumps in the data
+    STATE_NEG_ADJUSTMENTS = (
+        ('KY', -145000, '2020-11-07'),
+    )
+
+    for state_, cases, cases_date in STATE_NEG_ADJUSTMENTS:
+        if state_ != state:
+            continue
+        if pandas.Period(cases_date) <= latest_date:
+            spread_deaths(st, state_, cases, cases_date, col='Neg')
 
     # Blank out and forward fill entries for days with wimpy reporting
     dates = find_smooth_dates(state)
@@ -427,9 +441,13 @@ def get_infections_df(states, meta, death_lag, ifr_start, ifr_end, ifr_breaks, i
         # Find out the ratio of infections that were detected on the last date in the past
         last_date = infections.index[-(death_lag+1)]
         last_ratio = infections.loc[last_date] / (state.loc[last_date, 'Confirms7'] + 1)
+        last_tests = state.loc[last_date, 'DTests7']
+#         print(st, last_tests, state.DTests7.iloc[-death_lag:])
 
         # Apply that ratio to the dates since that date
-        infections.iloc[-death_lag:] = state.Confirms7.iloc[-death_lag:] * last_ratio
+#         infections.iloc[-death_lag:] = (state.Confirms7.iloc[-death_lag:] * last_ratio)
+        infections.iloc[-death_lag:] = (state.Confirms7.iloc[-death_lag:] * last_ratio *
+                                        (last_tests / state.DTests7.iloc[-death_lag:]))
 
         state['DPerM'] = state.Deaths7 / state.Pop
         state['NewInf'] = infections
