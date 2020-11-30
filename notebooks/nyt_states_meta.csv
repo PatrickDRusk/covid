@@ -27,7 +27,7 @@ MO,Missouri,6.137,R,R,Midwest,Red,37277
 MS,Mississippi,2.98,R,R,RedSouth,Red,15923
 MT,Montana,1.07,D,R,Midwest,Red,3776
 NC,North Carolina,10.49,D,R,Other,Swing,36148
-ND,North Dakota,0.762,R,R,Midwest,Red,5321
+ND,North Dakota,0.762,R,R,Dakotas,Red,5321
 NE,Nebraska,1.93,R,R,Midwest,Red,10584
 NH,New Hampshire,1.36,R,D,Other,Swing,6397
 NJ,New Jersey,8.88,D,D,NE,Blue,42413
@@ -40,7 +40,7 @@ OR,Oregon,4.22,D,D,Other,Blue,4672
 PA,Pennsylvania,12.8,D,R,Other,Swing,72519
 RI,Rhode Island,1.06,D,D,NE,Blue,7558
 SC,South Carolina,5.15,R,R,RedSouth,Red,15563
-SD,South Dakota,0.884,R,R,Midwest,Red,5585
+SD,South Dakota,0.884,R,R,Dakotas,Red,5585
 TN,Tennessee,6.829,R,R,RedSouth,Red,26647
 TX,Texas,29,R,R,RedSouth,Red,90708
 UT,Utah,3.21,R,R,Midwest,Red,5574

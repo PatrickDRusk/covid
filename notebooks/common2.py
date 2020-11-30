@@ -13,6 +13,7 @@ SMOOTH_CONFIGS = dict(
                 '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
                 '07-03-2020', '07-04-2020', # Independence Day
                 '09-05-2020', '09-08-2020', '09-09-2020',  # Labor Day
+                '2020-11-26', '2020-11-27', # Thanksgiving
             )
         ),
     SatSunMon=
@@ -22,6 +23,7 @@ SMOOTH_CONFIGS = dict(
                 '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
                 '07-03-2020', '07-04-2020', # Independence Day
                 '09-05-2020', '09-08-2020', '09-09-2020',  # Labor Day
+                '2020-11-26', '2020-11-27', # Thanksgiving
             )
         ),
     SunMon=
@@ -30,7 +32,8 @@ SMOOTH_CONFIGS = dict(
             Holidays = (
                 '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
                 '07-03-2020', '07-04-2020', # Independence Day
-                '09-05-2020', '09-08-2020', '09-09-2020',  # Labor Day
+                '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
+                '2020-11-26', '2020-11-27', # Thanksgiving
             )
         ),
     SunMonTue=
@@ -39,7 +42,8 @@ SMOOTH_CONFIGS = dict(
             Holidays = (
                 '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
                 '07-03-2020', '07-04-2020', # Independence Day
-                '09-05-2020', '09-08-2020', '09-09-2020',  # Labor Day
+                '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
+                '2020-11-26', '2020-11-27', # Thanksgiving
             )
         ),
     NewYork=
@@ -49,6 +53,7 @@ SMOOTH_CONFIGS = dict(
                 '04-30-2020', '05-01-2020', '05-02-2020',
                 '05-03-2020', '05-04-2020', '05-05-2020', 
                 '05-23-2020', '05-24-2020', '05-25-2020',  # Memorial Day
+                '2020-11-26', '2020-11-27', # Thanksgiving
             )
         ),
     Penn=
@@ -64,7 +69,8 @@ SMOOTH_CONFIGS = dict(
 
                 '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
                 '07-03-2020', '07-04-2020', # Independence Day
-                '09-05-2020', '09-08-2020', '09-09-2020',  # Labor Day
+                '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
+                '2020-11-26', '2020-11-27', # Thanksgiving
             )
         ),
     Virginia=
@@ -73,10 +79,11 @@ SMOOTH_CONFIGS = dict(
             Holidays = (
                 '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
                 '07-03-2020', '07-04-2020', # Independence Day
-                '09-05-2020', '09-08-2020', '09-09-2020',  # Labor Day
+                '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
 
                 '2020-09-10', '2020-09-11', '2020-09-12', 
                 '2020-09-13', '2020-09-14',
+                '2020-11-26', '2020-11-27', # Thanksgiving
             )
         ),
 )
@@ -406,8 +413,11 @@ def calc_state_stats(state, state_stats, meta, latest_date):
 
     # Prep for 7-day smoothing calculations
     st['Confirms'], st['Confirms7'] = calc_mid_weekly_average(st.Pos)
+    __, st['Confirms7'] = calc_mid_weekly_average(st.Confirms7.cumsum())
     st['Daily'], st['Deaths7'] = calc_mid_weekly_average(st.Deaths)
+    __, st['Deaths7'] = calc_mid_weekly_average(st.Deaths7.cumsum())
     st['DTests'], st['DTests7'] = calc_mid_weekly_average(st.Tests)
+    __, st['DTests7'] = calc_mid_weekly_average(st.DTests7.cumsum())
 
     return st.reset_index().set_index(['ST', 'Date']).copy()
 
