@@ -1,52 +1,52 @@
-ST,State,Pop,Gov,Vote2016,Region,Voting,Nursing
-AK,Alaska,0.731,R,R,Other,Red,499
-AL,Alabama,4.9,R,R,RedSouth,Red,22684
-AR,Arkansas,3.018,R,R,RedSouth,Red,17285
-AZ,Arizona,7.279,R,R,RedSouth,Swing,10325
-CA,California,39.5,D,D,Other,Blue,99956
-CO,Colorado,5.76,D,D,Other,Swing,16004
-CT,Connecticut,3.57,D,D,NE,Blue,19624
-DC,District of Columbia,0.706,D,D,Other,Blue,1256
-DE,Delaware,0.974,D,D,Other,Blue,3937
-FL,Florida,21.48,R,R,RedSouth,Swing,71162
-GA,Georgia,10.62,R,R,RedSouth,Red,22894
-HI,Hawaii,1.42,D,D,Other,Blue,3444
-IA,Iowa,3.16,R,R,Midwest,Red,22349
-ID,Idaho,1.79,R,R,Midwest,Red,3286
-IL,Illinois,12.67,D,D,Midwest,Blue,65607
-IN,Indiana,6.732,R,R,Midwest,Red,37564
-KS,Kansas,2.91,D,R,Midwest,Red,16812
-KY,Kentucky,4.47,D,R,Other,Red,21482
-LA,Louisiana,4.65,D,R,Other,Red,25863
-MA,Massachusetts,6.893,R,D,NE,Blue,34363
-MD,Maryland,6.05,R,D,Other,Blue,16464
-ME,Maine,1.34,D,D,Other,Swing,5846
-MI,Michigan,9.987,D,R,Midwest,Swing,37547
-MN,Minnesota,5.64,D,D,Midwest,Swing,23444
-MO,Missouri,6.137,R,R,Midwest,Red,37277
-MS,Mississippi,2.98,R,R,RedSouth,Red,15923
-MT,Montana,1.07,D,R,Midwest,Red,3776
-NC,North Carolina,10.49,D,R,Other,Swing,36148
-ND,North Dakota,0.762,R,R,Dakotas,Red,5321
-NE,Nebraska,1.93,R,R,Midwest,Red,10584
-NH,New Hampshire,1.36,R,D,Other,Swing,6397
-NJ,New Jersey,8.88,D,D,NE,Blue,42413
-NM,New Mexico,2.1,D,D,Other,Blue,5510
-NV,Nevada,3.08,D,D,Other,Swing,5626
-NY,New York,19.45,D,D,NE,Blue,89775
-OH,Ohio,11.69,R,R,Midwest,Red,71852
-OK,Oklahoma,3.96,R,R,RedSouth,Red,17213
-OR,Oregon,4.22,D,D,Other,Blue,4672
-PA,Pennsylvania,12.8,D,R,Other,Swing,72519
-RI,Rhode Island,1.06,D,D,NE,Blue,7558
-SC,South Carolina,5.15,R,R,RedSouth,Red,15563
-SD,South Dakota,0.884,R,R,Dakotas,Red,5585
-TN,Tennessee,6.829,R,R,RedSouth,Red,26647
-TX,Texas,29,R,R,RedSouth,Red,90708
-UT,Utah,3.21,R,R,Midwest,Red,5574
-VA,Virginia,8.536,D,D,Other,Blue,19550
-VT,Vermont,0.624,R,D,Other,Blue,2359
-WA,Washington,7.615,D,D,Other,Blue,15094
-WI,Wisconsin,5.82,D,R,Midwest,Swing,21236
-WV,West Virginia,1.79,R,R,Other,Red,9278
-WY,Wyoming,0.579,R,R,Midwest,Red,2224
+ST,State,Pop,Gov,Vote2016,Region,Voting,Nursing,Median
+AK,Alaska,0.731,R,R,Other,Red,499, 34.6 
+AL,Alabama,4.9,R,R,RedSouth,Red,22684, 39.2 
+AR,Arkansas,3.018,R,R,RedSouth,Red,17285, 38.3 
+AZ,Arizona,7.279,R,R,RedSouth,Swing,10325, 37.9 
+CA,California,39.5,D,D,Other,Blue,99956, 36.8 
+CO,Colorado,5.76,D,D,Other,Swing,16004, 36.9 
+CT,Connecticut,3.57,D,D,NE,Blue,19624, 41.0 
+DC,District of Columbia,0.706,D,D,Other,Blue,1256, 34.0 
+DE,Delaware,0.974,D,D,Other,Blue,3937, 40.7 
+FL,Florida,21.48,R,R,RedSouth,Swing,71162, 42.2 
+GA,Georgia,10.62,R,R,RedSouth,Red,22894, 36.9 
+HI,Hawaii,1.42,D,D,Other,Blue,3444, 39.2 
+IA,Iowa,3.16,R,R,Midwest,Red,22349, 38.2 
+ID,Idaho,1.79,R,R,Midwest,Red,3286, 36.6 
+IL,Illinois,12.67,D,D,Midwest,Blue,65607, 38.3 
+IN,Indiana,6.732,R,R,Midwest,Red,37564, 37.9 
+KS,Kansas,2.91,D,R,Midwest,Red,16812, 36.9 
+KY,Kentucky,4.47,D,R,Other,Red,21482, 38.9 
+LA,Louisiana,4.65,D,R,Other,Red,25863, 37.2 
+MA,Massachusetts,6.893,R,D,NE,Blue,34363, 39.4 
+MD,Maryland,6.05,R,D,Other,Blue,16464, 38.8 
+ME,Maine,1.34,D,D,Other,Swing,5846, 44.9 
+MI,Michigan,9.987,D,R,Midwest,Swing,37547, 39.8 
+MN,Minnesota,5.64,D,D,Midwest,Swing,23444, 38.1 
+MO,Missouri,6.137,R,R,Midwest,Red,37277, 38.7 
+MS,Mississippi,2.98,R,R,RedSouth,Red,15923, 37.7 
+MT,Montana,1.07,D,R,Midwest,Red,3776, 39.9 
+NC,North Carolina,10.49,D,R,Other,Swing,36148, 38.9 
+ND,North Dakota,0.762,R,R,Dakotas,Red,5321, 35.2 
+NE,Nebraska,1.93,R,R,Midwest,Red,10584, 36.6 
+NH,New Hampshire,1.36,R,D,Other,Swing,6397, 43.0 
+NJ,New Jersey,8.88,D,D,NE,Blue,42413, 40.0 
+NM,New Mexico,2.1,D,D,Other,Blue,5510, 38.1 
+NV,Nevada,3.08,D,D,Other,Swing,5626, 38.1 
+NY,New York,19.45,D,D,NE,Blue,89775, 39.0 
+OH,Ohio,11.69,R,R,Midwest,Red,71852, 39.4 
+OK,Oklahoma,3.96,R,R,RedSouth,Red,17213, 36.7 
+OR,Oregon,4.22,D,D,Other,Blue,4672, 39.4 
+PA,Pennsylvania,12.8,D,R,Other,Swing,72519, 40.8 
+RI,Rhode Island,1.06,D,D,NE,Blue,7558, 40.1 
+SC,South Carolina,5.15,R,R,RedSouth,Red,15563, 39.6 
+SD,South Dakota,0.884,R,R,Dakotas,Red,5585, 37.1 
+TN,Tennessee,6.829,R,R,RedSouth,Red,26647, 38.8 
+TX,Texas,29,R,R,RedSouth,Red,90708, 34.8 
+UT,Utah,3.21,R,R,Midwest,Red,5574, 31.0 
+VA,Virginia,8.536,D,D,Other,Blue,19550, 38.4 
+VT,Vermont,0.624,R,D,Other,Blue,2359, 42.8 
+WA,Washington,7.615,D,D,Other,Blue,15094, 37.7 
+WI,Wisconsin,5.82,D,R,Midwest,Swing,21236, 39.6 
+WV,West Virginia,1.79,R,R,Other,Red,9278, 42.7 
+WY,Wyoming,0.579,R,R,Midwest,Red,2224, 38.0 
