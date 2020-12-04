@@ -436,10 +436,12 @@ def get_infections_df(states, meta, death_lag, ifr_start, ifr_end, ifr_breaks, i
         st_meta = meta.loc[st]
         st_nursing = st_meta.Nursing / st_meta.Pop
         nursing_factor = math.sqrt(st_nursing / avg_nursing)
-        # print(f'{st=} {avg_nursing=} {st_nursing=} {nursing_factor=}')
+        median_factor = (st_meta.Median / 38.2) ** 2
+        ifr_factor = (nursing_factor + median_factor) / 2
+        # print(f'{st} {nursing_factor=:.2f} {median_factor=:.2f} {ifr_factor=:.2f}')
 
         # Calculate the IFR to apply for each day
-        ifr = _calc_ifr(state, ifr_start, ifr_end, ifr_breaks) * nursing_factor
+        ifr = _calc_ifr(state, ifr_start, ifr_end, ifr_breaks) * ifr_factor
         # ifr = pandas.Series(numpy.linspace(ifr_high, ifr_low, len(state)), index=state.index)
         # Calculate the infections in the past
         infections = state.shift(-death_lag).Deaths7 / ifr
