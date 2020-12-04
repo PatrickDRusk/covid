@@ -458,8 +458,8 @@ def get_infections_df(states, meta, death_lag, ifr_start, ifr_end, ifr_breaks, i
 
         # Apply that ratio to the dates since that date
 #         infections.iloc[-death_lag:] = (state.Confirms7.iloc[-death_lag:] * last_ratio)
-        infections.iloc[-death_lag:] = (state.Confirms7.iloc[-death_lag:] * last_ratio *
-                                        (last_tests / state.DTests7.iloc[-death_lag:]))
+        ntests_factor = 1.0 if st == 'WA' else (last_tests / state.DTests7.iloc[-death_lag:])
+        infections.iloc[-death_lag:] = (state.Confirms7.iloc[-death_lag:] * last_ratio * ntests_factor)
 
         state['DPerM'] = state.Deaths7 / state.Pop
         state['NewInf'] = infections
