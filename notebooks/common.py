@@ -385,6 +385,7 @@ def calc_state_stats(state, state_stats, meta, latest_date):
     # Correct for various jumps in the data
     STATE_NEG_ADJUSTMENTS = (
         ('KY', -145000, '2020-11-07'),
+        ('OR', 920000, '2020-12-01'),
     )
 
     for state_, cases, cases_date in STATE_NEG_ADJUSTMENTS:
@@ -403,9 +404,9 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         st = st.reset_index().copy()
 
     # Smooth series that might not be reported daily in some states
-    st.Pos = smooth_series(st.Pos)
-    st.Neg = smooth_series(st.Neg)
-    st['Tests'] = st.Pos + st.Neg
+    st['PosSm'] = smooth_series(st.Pos)
+    st['NegSm'] = smooth_series(st.Neg)
+    st['Tests'] = st.PosSm + st.NegSm
     st.Deaths = smooth_series(st.Deaths)
 
     for col in list(meta.columns):
