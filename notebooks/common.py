@@ -73,6 +73,17 @@ SMOOTH_CONFIGS = dict(
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
             )
         ),
+    Texas=
+        dict(
+            DaysOfWeek = ('W-SUN', 'W-MON'),
+            Holidays = (
+                '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
+                '07-03-2020', '07-04-2020', # Independence Day
+                '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
+                '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
+                '2020-12-02', '2020-12-03', '2020-12-04',
+            )
+        ),
     Virginia=
         dict(
             DaysOfWeek = ('W-SUN', 'W-MON'),
@@ -86,6 +97,14 @@ SMOOTH_CONFIGS = dict(
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
             )
         ),
+    Wyoming=
+        dict(
+            DaysOfWeek = (),
+            Holidays = (
+                '2020-11-19', '2020-11-23', '2020-11-24', '2020-11-25', '2020-11-26',
+                '2020-12-01', '2020-12-02', '2020-12-03', # Thanksgiving
+            )
+        ),
 )
 
 SMOOTH_DATES = dict()
@@ -94,11 +113,13 @@ SMOOTH_MAPS = dict(
     SatSun=('GA', 'IA', 'ID', 'KS', 'TN', 'UT', ),
     SatSunMon=('CA', 'CO', 'DE', 'IL', 'LA', 'NV', 'OH', 'SC', ),
     SunMon=('AR', 'AZ', 'FL', 'HI', 'IN', 'KY', 'MD', 'MI', 'MN', 'MO',
-       'MS', 'NC', 'NE', 'NH', 'NJ', 'OK', 'OR', 'SD', 'TX', 'WA', 'WI', ),
+       'MS', 'NC', 'NE', 'NH', 'NJ', 'OK', 'OR', 'SD', 'WA', 'WI', ),
     SunMonTue=('AL', ),
     NewYork=('NY', ),
     Penn=('PA', ),
+    Texas=('TX', ),
     Virginia=('VA', ),
+    Wyoming=('WY', ),
 )
 
 
