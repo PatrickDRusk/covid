@@ -110,8 +110,8 @@ SMOOTH_CONFIGS = dict(
 SMOOTH_DATES = dict()
 
 SMOOTH_MAPS = dict(
-    SatSun=('GA', 'IA', 'ID', 'KS', 'TN', 'UT', ),
-    SatSunMon=('CA', 'CO', 'DE', 'IL', 'LA', 'NV', 'OH', 'SC', ),
+    SatSun=('GA', 'ID', 'KS', 'TN', 'UT', ),
+    SatSunMon=('CA', 'CO', 'DE', 'IA', 'IL', 'LA', 'NV', 'OH', 'SC', ),
     SunMon=('AR', 'AZ', 'FL', 'HI', 'IN', 'KY', 'MD', 'MI', 'MN', 'MO',
        'MS', 'NC', 'NE', 'NH', 'NJ', 'OK', 'OR', 'SD', 'WA', 'WI', ),
     SunMonTue=('AL', ),
