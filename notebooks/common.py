@@ -5,10 +5,14 @@ import numpy
 import pandas
 
 
+# Set up strategies for smoothing data around weekends and holidays.
+# This differs considerably state by state, though many states fall into groupings
 SMOOTH_CONFIGS = dict(
     SatSun=
         dict(
+            # Ignore the values reported on these days
             DaysOfWeek = ('W-SAT', 'W-SUN', ),
+            # Also ignore these days around holidays
             Holidays = (
                 '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
                 '07-03-2020', '07-04-2020', # Independence Day
@@ -114,8 +118,7 @@ SMOOTH_CONFIGS = dict(
         ),
 )
 
-SMOOTH_DATES = dict()
-
+# Assign states to the various smoothing strategies
 SMOOTH_MAPS = dict(
     SatSun=('GA', 'ID', 'KS', 'TN', 'UT', ),
     SatSunMon=('CA', 'CO', 'DE', 'IA', 'IL', 'LA', 'NV', 'OH', 'SC', ),
@@ -128,6 +131,9 @@ SMOOTH_MAPS = dict(
     Virginia=('VA', ),
     Wyoming=('WY', ),
 )
+
+# This will hold the series of dates per state that need smoothing
+SMOOTH_DATES = dict()
 
 
 def load_data(earliest_date, latest_date):
@@ -351,7 +357,7 @@ def calc_state_stats(state, state_stats, meta, latest_date):
 
     st = st.reset_index().copy()
 
-    # Correct for various jumps in the data
+    # Correct for various jumps/dips in the reporting of death data
     STATE_DEATH_ADJUSTMENTS = (
         ('AL', -20, '2020-04-23'),
         ('AZ', 45, '2020-05-08'),
@@ -400,7 +406,8 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         if pandas.Period(deaths_date) <= latest_date:
             spread_deaths(st, state_, deaths, deaths_date)
 
-    # Correct for various jumps in the data
+    # Correct for various jumps/dips in the positive tests data
+    # NOTE: There are *tons* of these. I only put them in when they really mess up the estimation algorithm
     STATE_POS_ADJUSTMENTS = (
         ('MA', -8057, '2020-09-02'),
     )
@@ -411,7 +418,8 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         if pandas.Period(cases_date) <= latest_date:
             spread_deaths(st, state_, cases, cases_date, col='Pos')
 
-    # Correct for various jumps in the data
+    # Correct for various jumps/dips in the negative tests data
+    # NOTE: ibid
     STATE_NEG_ADJUSTMENTS = (
         ('KY', -145000, '2020-11-07'),
         ('OR', 920000, '2020-12-01'),
@@ -484,10 +492,10 @@ def get_infections_df(states, meta, death_lag, ifr_start, ifr_end, ifr_breaks, i
         last_date = infections.index[-(death_lag+1)]
         last_ratio = infections.loc[last_date] / (state.loc[last_date, 'Confirms7'] + 1)
         last_tests = state.loc[last_date, 'DTests7']
-#         print(st, last_tests, state.DTests7.iloc[-death_lag:])
+        # print(st, last_tests, state.DTests7.iloc[-death_lag:])
 
-        # Apply that ratio to the dates since that date
-#         infections.iloc[-death_lag:] = (state.Confirms7.iloc[-death_lag:] * last_ratio)
+        # Apply that ratio to the dates since that date,
+        # also adjusting for number of tests performed
         ntests_factor = 1.0 if st == 'WA' else (last_tests / state.DTests7.iloc[-death_lag:])
         infections.iloc[-death_lag:] = (state.Confirms7.iloc[-death_lag:] * last_ratio * ntests_factor)
 
