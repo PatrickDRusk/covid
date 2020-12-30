@@ -14,6 +14,7 @@ SMOOTH_CONFIGS = dict(
                 '07-03-2020', '07-04-2020', # Independence Day
                 '09-05-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-11-30', '2020-12-01', # Thanksgiving
+                '2020-12-24', '2020-12-25', '2020-12-28', # Christmas
             )
         ),
     SatSunMon=
@@ -24,6 +25,7 @@ SMOOTH_CONFIGS = dict(
                 '07-03-2020', '07-04-2020', # Independence Day
                 '09-05-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-12-01', # Thanksgiving
+                '2020-12-24', '2020-12-25', # Christmas
             )
         ),
     SunMon=
@@ -34,6 +36,7 @@ SMOOTH_CONFIGS = dict(
                 '07-03-2020', '07-04-2020', # Independence Day
                 '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
+                '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
             )
         ),
     SunMonTue=
@@ -44,6 +47,7 @@ SMOOTH_CONFIGS = dict(
                 '07-03-2020', '07-04-2020', # Independence Day
                 '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-11-28', # Thanksgiving
+                '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
             )
         ),
     NewYork=
@@ -71,6 +75,7 @@ SMOOTH_CONFIGS = dict(
                 '07-03-2020', '07-04-2020', # Independence Day
                 '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
+                '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
             )
         ),
     Texas=
@@ -82,6 +87,7 @@ SMOOTH_CONFIGS = dict(
                 '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
                 '2020-12-02', '2020-12-03', '2020-12-04',
+                '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
             )
         ),
     Virginia=
@@ -95,6 +101,7 @@ SMOOTH_CONFIGS = dict(
                 '2020-09-10', '2020-09-11', '2020-09-12', 
                 '2020-09-13', '2020-09-14',
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
+                '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
             )
         ),
     Wyoming=
@@ -173,7 +180,7 @@ def load_data(earliest_date, latest_date):
     nyt_stats[nyt_stats.State == 'Massachusetts'].tail()
 
     # Pull in the testing information from the COVID Tracking Project
-    ct_stats = pandas.read_csv('https://covidtracking.com/api/v1/states/daily.csv')
+    ct_stats = pandas.read_csv('https://covidtracking.com/api/v1/states/daily.csv', low_memory=False)
 
     # Remove territories
     ct_stats = ct_stats[~ct_stats.state.isin(['AS', 'GU', 'MP', 'PR', 'VI'])].copy()
@@ -354,6 +361,7 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         ('DE', 67, '2020-06-23'),
         ('DE', 47, '2020-07-24'),
         ('GA', 450, '2020-11-04'),
+        ('IA', 140, '2020-12-08'),
         ('IL', 123, '2020-06-08'),
         ('IN', 11, '2020-07-03'),
         ('LA', 40, '2020-04-14'),
