@@ -18,7 +18,8 @@ SMOOTH_CONFIGS = dict(
                 '07-03-2020', '07-04-2020', # Independence Day
                 '09-05-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-11-30', '2020-12-01', # Thanksgiving
-                '2020-12-24', '2020-12-25', '2020-12-28', # Christmas
+                '2020-12-24', '2020-12-25', '2020-12-28', '2020-12-29', '2020-12-30', # Christmas
+                '2021-01-01', # New Year's
             )
         ),
     SatSunMon=
@@ -29,7 +30,8 @@ SMOOTH_CONFIGS = dict(
                 '07-03-2020', '07-04-2020', # Independence Day
                 '09-05-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-12-01', # Thanksgiving
-                '2020-12-24', '2020-12-25', # Christmas
+                '2020-12-24', '2020-12-25', '2020-12-29', '2020-12-30', # Christmas
+                '2021-01-01', # New Year's
             )
         ),
     SunMon=
@@ -40,7 +42,8 @@ SMOOTH_CONFIGS = dict(
                 '07-03-2020', '07-04-2020', # Independence Day
                 '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
-                '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
+                '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', '2020-12-30', # Christmas
+                '2021-01-01', '2021-01-02', # New Year's
             )
         ),
     SunMonTue=
@@ -51,7 +54,34 @@ SMOOTH_CONFIGS = dict(
                 '07-03-2020', '07-04-2020', # Independence Day
                 '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-11-28', # Thanksgiving
-                '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
+                '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-30', # Christmas
+                '2021-01-01', '2021-01-02', # New Year's
+            )
+        ),
+    Kansas=
+        dict(
+            # Ignore the values reported on these days
+            DaysOfWeek = ('W-SAT', 'W-SUN', ),
+            # Also ignore these days around holidays
+            Holidays = (
+                '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
+                '07-03-2020', '07-04-2020', # Independence Day
+                '09-05-2020', '09-08-2020', '09-09-2020',  # Labor Day
+                '2020-11-26', '2020-11-27', '2020-11-30', '2020-12-01', # Thanksgiving
+                '2020-12-24', '2020-12-25', '2020-12-28', '2020-12-29', # Christmas
+                '2021-01-01', '2021-01-04', '2021-01-05', # New Year's
+            )
+        ),
+    Michigan=
+        dict(
+            DaysOfWeek = ('W-SUN', 'W-MON'),
+            Holidays = (
+                '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
+                '07-03-2020', '07-04-2020', # Independence Day
+                '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
+                '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
+                '2020-12-24', '2020-12-25', '2020-12-30', # Christmas
+                '2021-01-01', # New Year's
             )
         ),
     NewYork=
@@ -79,7 +109,20 @@ SMOOTH_CONFIGS = dict(
                 '07-03-2020', '07-04-2020', # Independence Day
                 '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
-                '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
+                '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', '2020-12-30', # Christmas
+                '2021-01-01', '2021-01-02', # New Year's
+            )
+        ),
+    RhodeIsland=
+        dict(
+            DaysOfWeek = ('W-SUN', 'W-MON'),
+            Holidays = (
+                '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
+                '07-03-2020', '07-04-2020', # Independence Day
+                '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
+                '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
+                '2020-12-23', '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', # Christmas
+                '2021-01-01', '2021-01-02', # New Year's
             )
         ),
     Texas=
@@ -91,7 +134,8 @@ SMOOTH_CONFIGS = dict(
                 '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
                 '2020-12-02', '2020-12-03', '2020-12-04',
-                '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
+                '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', '2020-12-30', # Christmas
+                '2021-01-01', '2021-01-02', # New Year's
             )
         ),
     Virginia=
@@ -105,7 +149,8 @@ SMOOTH_CONFIGS = dict(
                 '2020-09-10', '2020-09-11', '2020-09-12', 
                 '2020-09-13', '2020-09-14',
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
-                '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
+                '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', '2020-12-30', # Christmas
+                '2021-01-01', '2021-01-02', # New Year's
             )
         ),
     Wyoming=
@@ -114,19 +159,24 @@ SMOOTH_CONFIGS = dict(
             Holidays = (
                 '2020-11-19', '2020-11-23', '2020-11-24', '2020-11-25', '2020-11-26',
                 '2020-12-01', '2020-12-02', '2020-12-03', # Thanksgiving
+                '2020-12-09', '2020-12-11', '2020-12-12', '2020-12-15', '2020-12-16', '2020-12-17', # random anomalies
+                '2020-12-31', # New Year's
             )
         ),
 )
 
 # Assign states to the various smoothing strategies
 SMOOTH_MAPS = dict(
-    SatSun=('GA', 'ID', 'KS', 'TN', 'UT', ),
-    SatSunMon=('CA', 'CO', 'DE', 'IA', 'IL', 'LA', 'NV', 'OH', 'SC', ),
-    SunMon=('AR', 'AZ', 'FL', 'HI', 'IN', 'KY', 'MD', 'MI', 'MN', 'MO',
+    SatSun=('GA', 'ID', 'TN', 'UT', ),
+    SatSunMon=('CA', 'CO', 'DE', 'IA', 'IL', 'LA', 'MT', 'NV', 'NM', 'OH', 'SC', 'WV', ),
+    SunMon=('AR', 'AZ', 'FL', 'HI', 'IN', 'KY', 'MD', 'MN', 'MO',
        'MS', 'NC', 'NE', 'NH', 'NJ', 'OK', 'OR', 'SD', 'WA', 'WI', ),
     SunMonTue=('AL', ),
+    Kansas=('KS', ),
+    Michigan=('MI', ),
     NewYork=('NY', ),
     Penn=('PA', ),
+    RhodeIsland=('RI', ),
     Texas=('TX', ),
     Virginia=('VA', ),
     Wyoming=('WY', ),
@@ -168,7 +218,8 @@ def load_data(earliest_date, latest_date):
     cur_date = pandas.Period(nyt_stats.Date.max(), freq='D')
     cutoff_date = cur_date - days
     # ma = pandas.read_csv('DateOfDeath.csv').iloc[:, [0, 2, 4]]
-    ma = pandas.read_excel('DateOfDeath.xlsx').iloc[:, [0, 2, 4]]
+    # ma = pandas.read_excel('DateOfDeath.xlsx').iloc[:, [0, 2, 4]]
+    ma = pandas.read_excel('covid-19-dashboard.xlsx', sheet_name='DateofDeath').iloc[:, [0, 2, 4]]
     ma.columns = ['Date', 'Confirmed', 'Probable']
     ma['Deaths'] = ma.Confirmed + ma.Probable
     ma.Date = [pandas.Period(str(v), freq='D') for v in ma.Date]
@@ -397,6 +448,11 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         ('WA', 7, '2020-06-18'),
         ('WA', 30, '2020-07-24'),
         ('WA', -11, '2020-08-05'),
+        ('WA', -90, '2020-12-10'),
+        ('WA', -70, '2020-12-12'),
+        ('WA', 15, '2020-12-17'),
+        ('WA', -10, '2020-12-18'),
+        ('WA', 50, '2020-12-29'),
         ('WI', 8, '2020-06-10'),
     )
 
@@ -475,7 +531,8 @@ def get_infections_df(states, meta, death_lag, ifr_start, ifr_end, ifr_breaks, i
         st_nursing = st_meta.Nursing / st_meta.Pop
         nursing_factor = math.sqrt(st_nursing / avg_nursing)
         median_factor = (st_meta.Median / 38.2) ** 2
-        ifr_factor = (nursing_factor + median_factor) / 2
+        # nursing has 51% correlation to PFR; median has -3%, but I still think it counts for something for IFR
+        ifr_factor = ((2*nursing_factor) + median_factor) / 3
         # print(f'{st} {nursing_factor=:.2f} {median_factor=:.2f} {ifr_factor=:.2f}')
 
         # Calculate the IFR to apply for each day
@@ -496,7 +553,7 @@ def get_infections_df(states, meta, death_lag, ifr_start, ifr_end, ifr_breaks, i
 
         # Apply that ratio to the dates since that date,
         # also adjusting for number of tests performed
-        ntests_factor = 1.0 if st == 'WA' else (last_tests / state.DTests7.iloc[-death_lag:])
+        ntests_factor = 1.0 if st in ['MS', 'ND', 'WA'] else (last_tests / state.DTests7.iloc[-death_lag:])
         infections.iloc[-death_lag:] = (state.Confirms7.iloc[-death_lag:] * last_ratio * ntests_factor)
 
         state['DPerM'] = state.Deaths7 / state.Pop
