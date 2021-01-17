@@ -1,8 +1,12 @@
 import datetime
+import io
 import math
+import urllib
+import zipfile
 
 import numpy
 import pandas
+import scipy.stats
 
 
 # Set up strategies for smoothing data around weekends and holidays.
@@ -54,9 +58,11 @@ SMOOTH_CONFIGS = dict(
                 '07-03-2020', '07-04-2020', # Independence Day
                 '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-11-28', # Thanksgiving
-                '2020-12-23', '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
+                # Alabama undertook a massive re-check of death numbers that plopped a bunch
+                # of deaths in January, particularly 1/12, but other days, too
+                '2020-12-17', '2020-12-18', '2020-12-23', '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
                 '2020-12-30', '2020-12-31', '2021-01-01', '2021-01-02',
-                '2021-01-06', '2021-01-07', '2021-01-08', # New Year's
+                '2021-01-06', '2021-01-07', '2021-01-08', '2021-01-09', '2021-01-13', # New Year's
             )
         ),
     Kansas=
@@ -213,30 +219,17 @@ def load_data(earliest_date, latest_date):
         nyt_stats = nyt_stats.sort_values(['State', 'Date'])
         nyt_stats.index = list(range(len(nyt_stats)))
 
-    # Improve the Massachusetts data by using the DateOfDeath.csv from MA site
-    # Since the latest MA data is very incomplete, replace the most recent three days with
-    # the average from the prior five days
-    days = 4
-    cur_date = pandas.Period(nyt_stats.Date.max(), freq='D')
-    cutoff_date = cur_date - days
-    # ma = pandas.read_csv('DateOfDeath.csv').iloc[:, [0, 2, 4]]
-    # ma = pandas.read_excel('DateOfDeath.xlsx').iloc[:, [0, 2, 4]]
-    ma = pandas.read_excel('covid-19-dashboard.xlsx', sheet_name='DateofDeath').iloc[:, [0, 2, 4]]
-    ma.columns = ['Date', 'Confirmed', 'Probable']
-    ma['Deaths'] = ma.Confirmed + ma.Probable
-    ma.Date = [pandas.Period(str(v), freq='D') for v in ma.Date]
-    ma = ma[(ma.Date >= earliest_date) & (ma.Date <= cutoff_date)]
-    ma = ma.set_index('Date').sort_index()[['Deaths']]
-    extra_dates = pandas.period_range(end=cur_date, periods=days, freq='D')
-    avg_deaths = (ma.loc[cutoff_date].Deaths - ma.loc[cutoff_date - 5].Deaths) / 5
-    new_deaths = [ma.Deaths[-1] + (avg_deaths * (i + 1)) for i in range(days)]
-    ma = pandas.concat([ma, pandas.DataFrame(new_deaths, index=extra_dates, columns=['Deaths'])])
+    ma = fix_state_data(load_ma_data(), earliest_date, latest_date, latest_days=5)
+    replace_state_data(nyt_stats, ma, 'Massachusetts')
 
-    indices = nyt_stats[nyt_stats.State == 'Massachusetts'].index.copy()
-    spork = ma.copy()
-    spork.index = indices
-    nyt_stats.loc[indices, 'Deaths'] = spork.Deaths
-    nyt_stats[nyt_stats.State == 'Massachusetts'].tail()
+    ga = fix_state_data(load_ga_data(), earliest_date, latest_date, latest_days=8)
+    replace_state_data(nyt_stats, ga, 'Georgia')
+
+    pa = fix_state_data(load_pa_data(), earliest_date, latest_date, latest_days=9)
+    replace_state_data(nyt_stats, pa, 'Pennsylvania')
+
+    tx = fix_state_data(load_tx_data(), earliest_date, latest_date, latest_days=9)
+    replace_state_data(nyt_stats, tx, 'Texas')
 
     # Pull in the testing information from the COVID Tracking Project
     ct_stats = pandas.read_csv('https://covidtracking.com/api/v1/states/daily.csv', low_memory=False)
@@ -244,9 +237,6 @@ def load_data(earliest_date, latest_date):
     # Remove territories
     ct_stats = ct_stats[~ct_stats.state.isin(['AS', 'GU', 'MP', 'PR', 'VI'])].copy()
     ct_stats.date = [pandas.Period(str(v)) for v in ct_stats.date]
-
-    # Remember Texas deaths
-    ct_tx_stats = ct_stats[ct_stats.state == 'TX'][['date', 'death']]
 
     # Choose and rename a subset of columns
     ct_stats = ct_stats[['date', 'state', 'positive', 'negative']]
@@ -260,17 +250,100 @@ def load_data(earliest_date, latest_date):
     # Pull in the statistics for states
     ct_stats = ct_stats.join(meta.set_index('ST')).reset_index().sort_values(['ST', 'Date'])
 
-    # The NY Times treats TX data inappropriately. Use COVID Tracking Project for TX.
-    nyt_tx = nyt_stats[nyt_stats.ST == 'TX']
-    nyt_range = pandas.period_range(nyt_tx.Date.min(), nyt_tx.Date.max(), freq='D')
-    ct_tx = ct_tx_stats.copy()
-    ct_tx.columns = ['Date', 'Deaths']
-    ct_tx = ct_tx.set_index('Date').sort_index().Deaths.dropna()
-    ct_tx = ct_tx.asof(nyt_range).fillna(method='ffill').fillna(0.)
-    nyt_stats.loc[nyt_tx.index, 'Deaths'] = ct_tx.values
-
     return latest_date, meta, nyt_stats, ct_stats
 
+
+def load_ga_data():
+    georgia_uri = "https://ga-covid19.ondemand.sas.com/docs/ga_covid_data.zip"
+    df = download_zipped_df(georgia_uri, 'epicurve_symptom_date.csv', parse_dates=['symptom date'])
+    df = df[df.measure == 'state_total'][['symptom date', 'death_cum']].copy()
+    df.columns = ['Date', 'Deaths']
+    df.Date = [pandas.Period(str(v), freq='D') for v in df.Date]
+    return df
+
+
+def load_ma_data():
+    # Improve the Massachusetts data by using the DateOfDeath.csv from MA site
+    # Since the latest MA data is very incomplete, replace the most recent three days with
+    # the average from the prior five days
+    # ma = pandas.read_csv('DateOfDeath.csv').iloc[:, [0, 2, 4]]
+    # ma = pandas.read_excel('DateOfDeath.xlsx').iloc[:, [0, 2, 4]]
+    df = pandas.read_excel('covid-19-dashboard.xlsx', sheet_name='DateofDeath').iloc[:, [0, 2, 4]]
+    df.columns = ['Date', 'Confirmed', 'Probable']
+    df['Deaths'] = df.Confirmed + df.Probable
+    df.Date = [pandas.Period(str(v), freq='D') for v in df.Date]
+    return df[['Date', 'Deaths']].copy()
+
+
+def load_pa_data():
+    uri = "https://data.pa.gov/api/views/fbgu-sqgp/rows.csv?accessType=DOWNLOAD&bom=true&format=true"
+    df = pandas.read_csv(uri, parse_dates=['Date of Death'])
+    df = df[df['County Name'] == 'Pennsylvania']
+    df = df[['Date of Death', 'Total Deaths']].copy()
+    df.columns = ['Date', 'Deaths']
+    df = df.sort_values('Date')
+    df.Date = [pandas.Period(str(v), freq='D') for v in df.Date]
+    # Deal with fact that data starts at 2020-03-18, which is later than we want
+    pre_dates = pandas.period_range('2020-03-01', periods=17, freq='D')
+    df2 = pandas.DataFrame(0.0, index=pre_dates, columns=['Deaths']).reset_index()
+    df2.columns = ['Date', 'Deaths']
+    final = pandas.concat([df2, df]).sort_values('Date')
+    final.Deaths = [float(str(x).replace(',', '')) for x in final.Deaths]
+    return final
+
+
+def load_tx_data():
+    uri = "https://dshs.texas.gov/coronavirus/TexasCOVID19DailyCountyFatalityCountData.xlsx"
+    df = pandas.read_excel(uri, skiprows=2)
+    df = df[df['County Name'] == 'Total'].copy()
+    num_cols = len(df.columns)
+    df = df.iloc[0, 1:]
+    index = pandas.period_range('2020-03-07', periods=len(df), freq='D')
+    df = pandas.DataFrame([float(x) for x in df.values], index=index).reset_index()
+    df.columns = ['Date', 'Deaths']
+    return df.copy()
+
+
+def replace_state_data(nyt_stats, st, state_name):
+    indices = nyt_stats[nyt_stats.State == state_name].index.copy()
+    spork = st.copy()
+    spork.index = indices
+    nyt_stats.loc[indices, 'Deaths'] = spork.Deaths
+
+
+def fix_state_data_old(st, earliest_date, latest_date,  latest_days, avg_days=5):
+    max_date = st.Date.max()
+    cutoff_date = max_date - latest_days
+    if max_date < latest_date:
+        latest_days += (latest_date - max_date).n
+        max_date = latest_date
+    st = st[(st.Date >= earliest_date) & (st.Date <= cutoff_date)]
+    st = st.set_index('Date').sort_index().copy()
+    extra_dates = pandas.period_range(end=max_date, periods=latest_days, freq='D')
+    avg_deaths = (st.loc[cutoff_date].Deaths - st.loc[cutoff_date - avg_days].Deaths) / avg_days
+    new_deaths = [st.Deaths[-1] + (avg_deaths * (i + 1)) for i in range(latest_days)]
+    st = pandas.concat([st, pandas.DataFrame(new_deaths, index=extra_dates, columns=['Deaths'])])
+    st = st.loc[:latest_date].copy()
+    return st
+
+
+def fix_state_data(st, earliest_date, latest_date,  latest_days, avg_days=10):
+    max_date = st.Date.max()
+    cutoff_date = max_date - latest_days
+    if max_date < latest_date:
+        latest_days += (latest_date - max_date).n
+        max_date = latest_date
+    st = st[(st.Date >= earliest_date) & (st.Date <= cutoff_date)]
+    st = st.set_index('Date').sort_index().copy()
+    extra_dates = pandas.period_range(end=max_date, periods=latest_days, freq='D')
+    dailies = (st.Deaths - st.Deaths.shift())[-avg_days:]
+    slope, intercept, r, p, std = scipy.stats.linregress(list(range(avg_days)), dailies.values)
+    slope_vals = numpy.linspace(slope, slope/1.0, latest_days)
+    new_dailies = [(intercept + ((avg_days+i)*slope_vals[i])) for i in range(latest_days)]
+    new_deaths = [(sum(new_dailies[:i+1]) + st.Deaths[-1])  for i in range(latest_days)]
+    st = pandas.concat([st, pandas.DataFrame(new_deaths, index=extra_dates, columns=['Deaths'])])
+    st = st.loc[:latest_date].copy()
+    return st
 
 def create_smooth_dates(earliest_date, latest_date):
     sd = str(earliest_date)
@@ -419,7 +492,6 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         ('CO', -29, '2020-04-25'),
         ('DE', 67, '2020-06-23'),
         ('DE', 47, '2020-07-24'),
-        ('GA', 450, '2020-11-04'),
         ('IA', 140, '2020-12-08'),
         ('IL', 123, '2020-06-08'),
         ('IN', 11, '2020-07-03'),
@@ -444,7 +516,7 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         ('SC', 25, '2020-04-29'),
         ('SC', 37, '2020-07-16'),
         ('TN', 16, '2020-06-12'),
-        ('TX', 636, '2020-07-27'),
+        # ('TX', 636, '2020-07-27'),
         ('VA', 60, '2020-09-15'),
         ('WA', -12, '2020-06-17'),
         ('WA', 7, '2020-06-18'),
@@ -589,3 +661,11 @@ def _calc_ifr(state, ifr_start, ifr_end, ifr_breaks):
     span = pandas.concat(spans)
     span = pandas.Series(span.values, index=state.index)
     return span
+
+
+def download_zipped_df(uri, fname, parse_dates=None):
+    response = urllib.request.urlopen(uri)
+    zippedData = response.read()
+    myzipfile = zipfile.ZipFile(io.BytesIO(zippedData))
+    foofile = myzipfile.open(fname)
+    return pandas.read_csv(foofile, parse_dates=parse_dates)
