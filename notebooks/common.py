@@ -175,17 +175,17 @@ SMOOTH_CONFIGS = dict(
 
 # Assign states to the various smoothing strategies
 SMOOTH_MAPS = dict(
-    SatSun=('GA', 'ID', 'TN', 'UT', ),
+    SatSun=('ID', 'UT', ),  # GA, TN
     SatSunMon=('CA', 'CO', 'DE', 'IA', 'IL', 'LA', 'MT', 'NV', 'NM', 'OH', 'SC', 'WV', ),
-    SunMon=('AR', 'AZ', 'FL', 'HI', 'IN', 'KY', 'MD', 'MN', 'MO',
-       'MS', 'NC', 'NE', 'NH', 'NJ', 'OK', 'OR', 'SD', 'WA', 'WI', ),
+    SunMon=('AR', 'AZ', 'HI', 'IN', 'KY', 'MD', 'MN', 'MO',
+       'MS', 'NE', 'NH', 'NJ', 'OK', 'OR', 'SD', 'WA', 'WI', ),  # FL, NC
     Alabama=('AL', ),
     Kansas=('KS', ),
     Michigan=('MI', ),
     NewYork=('NY', ),
-    Penn=('PA', ),
+    # Penn=('PA', ),
     RhodeIsland=('RI', ),
-    Texas=('TX', ),
+    # Texas=('TX', ),
     Virginia=('VA', ),
     Wyoming=('WY', ),
 )
@@ -219,14 +219,23 @@ def load_data(earliest_date, latest_date):
         nyt_stats = nyt_stats.sort_values(['State', 'Date'])
         nyt_stats.index = list(range(len(nyt_stats)))
 
+    fl = fix_state_data(load_fl_data(), earliest_date, latest_date, latest_days=12, decay=2)
+    replace_state_data(nyt_stats, fl, 'Florida')
+
     ma = fix_state_data(load_ma_data(), earliest_date, latest_date, latest_days=5)
     replace_state_data(nyt_stats, ma, 'Massachusetts')
 
     ga = fix_state_data(load_ga_data(), earliest_date, latest_date, latest_days=8)
     replace_state_data(nyt_stats, ga, 'Georgia')
 
+    nc = fix_state_data(load_nc_data(), earliest_date, latest_date, latest_days=5)
+    replace_state_data(nyt_stats, nc, 'North Carolina')
+
     pa = fix_state_data(load_pa_data(), earliest_date, latest_date, latest_days=9)
     replace_state_data(nyt_stats, pa, 'Pennsylvania')
+
+    tn = fix_state_data(load_tn_data(), earliest_date, latest_date, latest_days=7)
+    replace_state_data(nyt_stats, tn, 'Tennessee')
 
     tx = fix_state_data(load_tx_data(), earliest_date, latest_date, latest_days=9)
     replace_state_data(nyt_stats, tx, 'Texas')
@@ -253,9 +262,22 @@ def load_data(earliest_date, latest_date):
     return latest_date, meta, nyt_stats, ct_stats
 
 
+def load_fl_data():
+    uri = '/Users/patrick/Downloads/Florida_COVID19_Case_Line_Data.csv'
+    fl = pandas.read_csv(uri, parse_dates=['EventDate'])
+    df = fl[['Died', 'EventDate']].copy()
+    df = df[df.Died.isin(('Yes', 'Recent'))][['EventDate']].copy()
+    df['Date'] = [pandas.Period(d.date(), freq='D') for d in df.EventDate]
+    df = df.groupby('Date').count().sort_index().cumsum()
+    all_dates = pandas.period_range(start='2020-01-01', end=df.index[-1], freq='D')
+    df = df.reindex(all_dates, method='ffill').fillna(0.0).reset_index()
+    df.columns = ['Date', 'Deaths']
+    return df
+
+
 def load_ga_data():
-    georgia_uri = "https://ga-covid19.ondemand.sas.com/docs/ga_covid_data.zip"
-    df = download_zipped_df(georgia_uri, 'epicurve_symptom_date.csv', parse_dates=['symptom date'])
+    uri = "https://ga-covid19.ondemand.sas.com/docs/ga_covid_data.zip"
+    df = download_zipped_df(uri, 'epicurve_symptom_date.csv', parse_dates=['symptom date'])
     df = df[df.measure == 'state_total'][['symptom date', 'death_cum']].copy()
     df.columns = ['Date', 'Deaths']
     df.Date = [pandas.Period(str(v), freq='D') for v in df.Date]
@@ -275,6 +297,16 @@ def load_ma_data():
     return df[['Date', 'Deaths']].copy()
 
 
+def load_nc_data():
+    uri = '/Users/patrick/Downloads/TABLE_DAILY_CASE&DEATHS_METRICS_data.csv'
+    nc = pandas.read_csv('/Users/patrick/Downloads/TABLE_DAILY_CASE&DEATHS_METRICS_data.csv',
+                         encoding='utf_16', sep='\t', parse_dates=['Date'])[['Date', 'Measure Values']]
+    nc.Date = [pandas.Period(str(v), freq='D') for v in nc.Date]
+    nc = nc.set_index('Date').sort_index()
+    nc['Deaths'] = nc['Measure Values'].fillna(0.0).cumsum()
+    return nc.reset_index()[['Date', 'Deaths']].copy()
+
+
 def load_pa_data():
     uri = "https://data.pa.gov/api/views/fbgu-sqgp/rows.csv?accessType=DOWNLOAD&bom=true&format=true"
     df = pandas.read_csv(uri, parse_dates=['Date of Death'])
@@ -290,6 +322,15 @@ def load_pa_data():
     final = pandas.concat([df2, df]).sort_values('Date')
     final.Deaths = [float(str(x).replace(',', '')) for x in final.Deaths]
     return final
+
+
+def load_tn_data():
+    uri = ("https://www.tn.gov/content/dam/tn/health/documents/cedep/novel-coronavirus"
+           "/datasets/Public-Dataset-Daily-Case-Info.XLSX")
+    tn = pandas.read_excel(uri, parse_dates=['DATE'])[['DATE', 'TOTAL_DEATHS_BY_DOD']].copy()
+    tn.columns = ['Date', 'Deaths']
+    tn.Date = [pandas.Period(str(v), freq='D') for v in tn.Date]
+    return tn
 
 
 def load_tx_data():
@@ -327,7 +368,7 @@ def fix_state_data_old(st, earliest_date, latest_date,  latest_days, avg_days=5)
     return st
 
 
-def fix_state_data(st, earliest_date, latest_date,  latest_days, avg_days=10):
+def fix_state_data(st, earliest_date, latest_date,  latest_days, avg_days=10, decay=1.1):
     max_date = st.Date.max()
     cutoff_date = max_date - latest_days
     if max_date < latest_date:
@@ -338,7 +379,7 @@ def fix_state_data(st, earliest_date, latest_date,  latest_days, avg_days=10):
     extra_dates = pandas.period_range(end=max_date, periods=latest_days, freq='D')
     dailies = (st.Deaths - st.Deaths.shift())[-avg_days:]
     slope, intercept, r, p, std = scipy.stats.linregress(list(range(avg_days)), dailies.values)
-    slope_vals = numpy.linspace(slope, slope/1.0, latest_days)
+    slope_vals = numpy.linspace(slope, slope/decay, latest_days)
     new_dailies = [(intercept + ((avg_days+i)*slope_vals[i])) for i in range(latest_days)]
     new_deaths = [(sum(new_dailies[:i+1]) + st.Deaths[-1])  for i in range(latest_days)]
     st = pandas.concat([st, pandas.DataFrame(new_deaths, index=extra_dates, columns=['Deaths'])])
@@ -515,7 +556,7 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         ('OH', 80, '2020-04-29'),
         ('SC', 25, '2020-04-29'),
         ('SC', 37, '2020-07-16'),
-        ('TN', 16, '2020-06-12'),
+        # ('TN', 16, '2020-06-12'),
         # ('TX', 636, '2020-07-27'),
         ('VA', 60, '2020-09-15'),
         ('WA', -12, '2020-06-17'),
