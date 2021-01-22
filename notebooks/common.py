@@ -1,6 +1,7 @@
 import datetime
 import io
 import math
+import os
 import urllib
 import zipfile
 
@@ -83,20 +84,6 @@ SMOOTH_CONFIGS = dict(
                 '2021-01-18', # MLK
             )
         ),
-    Michigan=
-        dict(
-            DaysOfWeek = ('W-SUN', 'W-MON'),
-            Holidays = (
-                '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
-                '07-03-2020', '07-04-2020', # Independence Day
-                '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
-                '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
-                '2020-12-22', '2020-12-23', '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
-                '2020-12-29', '2020-12-30', '2020-12-31', '2021-01-01', '2021-01-02', # New Year's
-                '2021-01-05',
-                '2021-01-19', # MLK
-            )
-        ),
     NewYork=
         dict(
             DaysOfWeek = (),
@@ -105,26 +92,6 @@ SMOOTH_CONFIGS = dict(
                 '05-03-2020', '05-04-2020', '05-05-2020', 
                 '05-23-2020', '05-24-2020', '05-25-2020',  # Memorial Day
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-11-29', '2020-11-30', '2020-12-01', # Thanksgiving
-            )
-        ),
-    Penn=
-        dict(
-            DaysOfWeek = ('W-SUN', 'W-MON'),
-            Holidays = (
-                '04-21-2020', '04-22-2020', '04-23-2020',
-                '04-24-2020', '04-25-2020', '04-26-2020',
-                '04-27-2020', '04-28-2020', '04-29-2020',
-
-                '05-03-2020', '05-04-2020', '05-05-2020',
-                '05-06-2020', '05-07-2020',
-
-                '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
-                '07-03-2020', '07-04-2020', # Independence Day
-                '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
-                '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
-                '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', '2020-12-30', # Christmas
-                '2021-01-01', '2021-01-02', # New Year's
-                '2021-01-19', # MLK
             )
         ),
     RhodeIsland=
@@ -136,36 +103,6 @@ SMOOTH_CONFIGS = dict(
                 '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
                 '2020-12-23', '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', # Christmas
-                '2021-01-01', '2021-01-02', # New Year's
-                '2021-01-19', # MLK
-            )
-        ),
-    Texas=
-        dict(
-            DaysOfWeek = ('W-SUN', 'W-MON'),
-            Holidays = (
-                '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
-                '07-03-2020', '07-04-2020', # Independence Day
-                '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
-                '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
-                '2020-12-02', '2020-12-03', '2020-12-04',
-                '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', '2020-12-30', # Christmas
-                '2021-01-01', '2021-01-02', # New Year's
-                '2021-01-19', # MLK
-            )
-        ),
-    Virginia=
-        dict(
-            DaysOfWeek = ('W-SUN', 'W-MON'),
-            Holidays = (
-                '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
-                '07-03-2020', '07-04-2020', # Independence Day
-                '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
-
-                '2020-09-10', '2020-09-11', '2020-09-12', 
-                '2020-09-13', '2020-09-14',
-                '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
-                '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', '2020-12-30', # Christmas
                 '2021-01-01', '2021-01-02', # New Year's
                 '2021-01-19', # MLK
             )
@@ -185,23 +122,23 @@ SMOOTH_CONFIGS = dict(
 
 # Assign states to the various smoothing strategies
 SMOOTH_MAPS = dict(
-    SatSun=('ID', 'UT', ),  # GA, TN
+    SatSun=('ID', 'UT', ),
     SatSunMon=('CA', 'CO', 'DE', 'IA', 'IL', 'LA', 'MT', 'NM', 'OH', 'SC', 'WV', ),
     SunMon=('AR', 'AZ', 'HI', 'KY', 'MD', 'MN',
-       'MS', 'NE', 'NH', 'NJ', 'OK', 'OR', 'SD', 'WA', 'WI', ),  # FL, IN, MO, NC, NV
+       'MS', 'NE', 'NH', 'NJ', 'OK', 'OR', 'SD', 'WA', 'WI', ),
     Alabama=('AL', ),
     Kansas=('KS', ),
-    # Michigan=('MI', ),
     NewYork=('NY', ),
-    # Penn=('PA', ),
     RhodeIsland=('RI', ),
-    # Texas=('TX', ),
-    # Virginia=('VA', ),
     Wyoming=('WY', ),
 )
 
 # This will hold the series of dates per state that need smoothing
 SMOOTH_DATES = dict()
+
+
+def download_path(fname):
+    return os.path.join(os.environ['HOME'], 'Downloads', fname)
 
 
 def load_data(earliest_date, latest_date):
@@ -304,7 +241,7 @@ def load_ct_data():
 
 
 def load_fl_data():
-    uri = '/Users/patrick/Downloads/Florida_COVID19_Case_Line_Data.csv'
+    uri = download_path('Florida_COVID19_Case_Line_Data.csv')
     fl = pandas.read_csv(uri, parse_dates=['EventDate'])
     df = fl[['Died', 'EventDate']].copy()
     df = df[df.Died.isin(('Yes', 'Recent'))][['EventDate']].copy()
@@ -339,7 +276,7 @@ def load_in_data():
 
 
 def load_ma_data():
-    df = pandas.read_excel('/Users/patrick/Downloads/covid-19-dashboard.xlsx',
+    df = pandas.read_excel(download_path('covid-19-dashboard.xlsx'),
                            sheet_name='DateofDeath').iloc[:, [0, 2, 4]]
     df.columns = ['Date', 'Confirmed', 'Probable']
     df['Deaths'] = df.Confirmed + df.Probable
@@ -348,8 +285,7 @@ def load_ma_data():
 
 
 def load_mi_data():
-    uri = ("/Users/patrick/Downloads/"
-           "Cases_and_Deaths_by_County_and_by_Date_of_Symptom_Onset_or_by_Date_of_Death.xlsx")
+    uri = (download_path('Cases_and_Deaths_by_County_and_by_Date_of_Symptom_Onset_or_by_Date_of_Death.xlsx'))
     mi = pandas.read_excel(uri, parse_dates=['Date'])
     mi = mi.groupby('Date').sum()[['Deaths.Cumulative']].reset_index()
     mi.columns = ['Date', 'Deaths']
@@ -372,9 +308,8 @@ def load_mo_data():
 
 
 def load_nc_data():
-    uri = '/Users/patrick/Downloads/TABLE_DAILY_CASE&DEATHS_METRICS_data.csv'
-    nc = pandas.read_csv('/Users/patrick/Downloads/TABLE_DAILY_CASE&DEATHS_METRICS_data.csv',
-                         encoding='utf_16', sep='\t', parse_dates=['Date'])[['Date', 'Measure Values']]
+    uri = download_path('TABLE_DAILY_CASE&DEATHS_METRICS_data.csv')
+    nc = pandas.read_csv(uri, encoding='utf_16', sep='\t', parse_dates=['Date'])[['Date', 'Measure Values']]
     nc.Date = [pandas.Period(str(v), freq='D') for v in nc.Date]
     nc = nc.set_index('Date').sort_index()
     nc['Deaths'] = nc['Measure Values'].fillna(0.0).cumsum()
@@ -382,7 +317,7 @@ def load_nc_data():
 
 
 def load_nv_data():
-    uri = "/Users/patrick/Downloads/Nevada Dashboard Extract.xlsx"
+    uri = download_path('Nevada Dashboard Extract.xlsx')
     nv = pandas.read_excel(uri, sheet_name='Deaths', skiprows=2).iloc[:, [0, 1, 2]].copy()
     nv.columns = ['Date', 'Daily', 'Deaths']
     unknown_deaths = nv[nv.Date == 'Unknown'].Daily.iloc[0]
