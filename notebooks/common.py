@@ -24,6 +24,7 @@ SMOOTH_CONFIGS = dict(
                 '2020-11-26', '2020-11-27', '2020-11-30', '2020-12-01', # Thanksgiving
                 '2020-12-24', '2020-12-25', '2020-12-28', '2020-12-29', '2020-12-30', # Christmas
                 '2021-01-01', # New Year's
+                '2021-01-18', # MLK
             )
         ),
     SatSunMon=
@@ -36,6 +37,7 @@ SMOOTH_CONFIGS = dict(
                 '2020-11-26', '2020-11-27', '2020-12-01', # Thanksgiving
                 '2020-12-24', '2020-12-25', '2020-12-29', '2020-12-30', # Christmas
                 '2021-01-01', # New Year's
+                '2021-01-19', # MLK
             )
         ),
     SunMon=
@@ -48,6 +50,7 @@ SMOOTH_CONFIGS = dict(
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
                 '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', '2020-12-30', # Christmas
                 '2021-01-01', '2021-01-02', # New Year's
+                '2021-01-19', # MLK
             )
         ),
     Alabama=
@@ -77,6 +80,7 @@ SMOOTH_CONFIGS = dict(
                 '2020-11-26', '2020-11-27', '2020-11-30', '2020-12-01', # Thanksgiving
                 '2020-12-24', '2020-12-25', '2020-12-28', '2020-12-29', # Christmas
                 '2021-01-01', '2021-01-04', '2021-01-05', # New Year's
+                '2021-01-18', # MLK
             )
         ),
     Michigan=
@@ -90,6 +94,7 @@ SMOOTH_CONFIGS = dict(
                 '2020-12-22', '2020-12-23', '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
                 '2020-12-29', '2020-12-30', '2020-12-31', '2021-01-01', '2021-01-02', # New Year's
                 '2021-01-05',
+                '2021-01-19', # MLK
             )
         ),
     NewYork=
@@ -119,6 +124,7 @@ SMOOTH_CONFIGS = dict(
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
                 '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', '2020-12-30', # Christmas
                 '2021-01-01', '2021-01-02', # New Year's
+                '2021-01-19', # MLK
             )
         ),
     RhodeIsland=
@@ -131,6 +137,7 @@ SMOOTH_CONFIGS = dict(
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
                 '2020-12-23', '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', # Christmas
                 '2021-01-01', '2021-01-02', # New Year's
+                '2021-01-19', # MLK
             )
         ),
     Texas=
@@ -144,6 +151,7 @@ SMOOTH_CONFIGS = dict(
                 '2020-12-02', '2020-12-03', '2020-12-04',
                 '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', '2020-12-30', # Christmas
                 '2021-01-01', '2021-01-02', # New Year's
+                '2021-01-19', # MLK
             )
         ),
     Virginia=
@@ -159,6 +167,7 @@ SMOOTH_CONFIGS = dict(
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
                 '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', '2020-12-30', # Christmas
                 '2021-01-01', '2021-01-02', # New Year's
+                '2021-01-19', # MLK
             )
         ),
     Wyoming=
@@ -169,6 +178,7 @@ SMOOTH_CONFIGS = dict(
                 '2020-12-01', '2020-12-02', '2020-12-03', # Thanksgiving
                 '2020-12-09', '2020-12-11', '2020-12-12', '2020-12-15', '2020-12-16', '2020-12-17', # random anomalies
                 '2020-12-31', # New Year's
+                '2021-01-18', # MLK
             )
         ),
 )
@@ -176,17 +186,17 @@ SMOOTH_CONFIGS = dict(
 # Assign states to the various smoothing strategies
 SMOOTH_MAPS = dict(
     SatSun=('ID', 'UT', ),  # GA, TN
-    SatSunMon=('CA', 'CO', 'DE', 'IA', 'IL', 'LA', 'MT', 'NV', 'NM', 'OH', 'SC', 'WV', ),
-    SunMon=('AR', 'AZ', 'HI', 'IN', 'KY', 'MD', 'MN', 'MO',
-       'MS', 'NE', 'NH', 'NJ', 'OK', 'OR', 'SD', 'WA', 'WI', ),  # FL, NC
+    SatSunMon=('CA', 'CO', 'DE', 'IA', 'IL', 'LA', 'MT', 'NM', 'OH', 'SC', 'WV', ),
+    SunMon=('AR', 'AZ', 'HI', 'KY', 'MD', 'MN',
+       'MS', 'NE', 'NH', 'NJ', 'OK', 'OR', 'SD', 'WA', 'WI', ),  # FL, IN, MO, NC, NV
     Alabama=('AL', ),
     Kansas=('KS', ),
-    Michigan=('MI', ),
+    # Michigan=('MI', ),
     NewYork=('NY', ),
     # Penn=('PA', ),
     RhodeIsland=('RI', ),
     # Texas=('TX', ),
-    Virginia=('VA', ),
+    # Virginia=('VA', ),
     Wyoming=('WY', ),
 )
 
@@ -219,26 +229,44 @@ def load_data(earliest_date, latest_date):
         nyt_stats = nyt_stats.sort_values(['State', 'Date'])
         nyt_stats.index = list(range(len(nyt_stats)))
 
-    fl = fix_state_data(load_fl_data(), earliest_date, latest_date, latest_days=12, decay=2)
+    ct = fix_state_data(load_ct_data(), earliest_date, latest_date, latest_days=6)
+    replace_state_data(nyt_stats, ct, 'Connecticut')
+
+    fl = fix_state_data(load_fl_data(), earliest_date, latest_date, latest_days=14, decay=1.5)
     replace_state_data(nyt_stats, fl, 'Florida')
 
-    ma = fix_state_data(load_ma_data(), earliest_date, latest_date, latest_days=5)
-    replace_state_data(nyt_stats, ma, 'Massachusetts')
-
-    ga = fix_state_data(load_ga_data(), earliest_date, latest_date, latest_days=8)
+    ga = fix_state_data(load_ga_data(), earliest_date, latest_date, latest_days=9)
     replace_state_data(nyt_stats, ga, 'Georgia')
 
-    nc = fix_state_data(load_nc_data(), earliest_date, latest_date, latest_days=5)
+    in_ = fix_state_data(load_in_data(), earliest_date, latest_date, latest_days=7)
+    replace_state_data(nyt_stats, in_, 'Indiana')
+
+    ma = fix_state_data(load_ma_data(), earliest_date, latest_date, latest_days=6)
+    replace_state_data(nyt_stats, ma, 'Massachusetts')
+
+    mi = fix_state_data(load_mi_data(), earliest_date, latest_date, latest_days=11)
+    replace_state_data(nyt_stats, mi, 'Michigan')
+
+    mo = fix_state_data(load_mo_data(), earliest_date, latest_date, latest_days=14, decay=1.5)
+    replace_state_data(nyt_stats, mo, 'Missouri')
+
+    nc = fix_state_data(load_nc_data(), earliest_date, latest_date, latest_days=6)
     replace_state_data(nyt_stats, nc, 'North Carolina')
+
+    nv = fix_state_data(load_nv_data(), earliest_date, latest_date, latest_days=8)
+    replace_state_data(nyt_stats, nv, 'Nevada')
 
     pa = fix_state_data(load_pa_data(), earliest_date, latest_date, latest_days=9)
     replace_state_data(nyt_stats, pa, 'Pennsylvania')
 
-    tn = fix_state_data(load_tn_data(), earliest_date, latest_date, latest_days=7)
+    tn = fix_state_data(load_tn_data(), earliest_date, latest_date, latest_days=8)
     replace_state_data(nyt_stats, tn, 'Tennessee')
 
     tx = fix_state_data(load_tx_data(), earliest_date, latest_date, latest_days=9)
     replace_state_data(nyt_stats, tx, 'Texas')
+
+    va = fix_state_data(load_va_data(), earliest_date, latest_date, latest_days=11)
+    replace_state_data(nyt_stats, va, 'Virginia')
 
     # Pull in the testing information from the COVID Tracking Project
     ct_stats = pandas.read_csv('https://covidtracking.com/api/v1/states/daily.csv', low_memory=False)
@@ -260,6 +288,19 @@ def load_data(earliest_date, latest_date):
     ct_stats = ct_stats.join(meta.set_index('ST')).reset_index().sort_values(['ST', 'Date'])
 
     return latest_date, meta, nyt_stats, ct_stats
+
+
+def load_ct_data():
+    uri = ("https://data.ct.gov/api/views/abag-bjkj/rows.csv?accessType=DOWNLOAD")
+    ct = pandas.read_csv(uri, parse_dates=['Date of death'])
+    ct = ct[['Date of death', 'Total deaths']].sort_values('Date of death')
+    ct.columns = ['Date', 'Deaths']
+    ct.Date = [pandas.Period(d.date(), freq='D') for d in ct.Date]
+    ct.Deaths = ct.Deaths.cumsum()
+    all_dates = pandas.period_range(start='2020-01-01', end=ct.Date.iloc[-1], freq='D')
+    ct = ct.set_index('Date').reindex(all_dates, method='ffill').fillna(0.0).reset_index()
+    ct.columns = ['Date', 'Deaths']
+    return ct
 
 
 def load_fl_data():
@@ -284,17 +325,50 @@ def load_ga_data():
     return df
 
 
+def load_in_data():
+    uri = ("https://hub.mph.in.gov/dataset/6bcfb11c-6b9e-44b2-be7f-a2910d28949a/resource/"
+           "7661f008-81b5-4ff2-8e46-f59ad5aad456/download/covid_report_death_date_agegrp.xlsx")
+    in_ = pandas.read_excel(uri, parse_dates=['date'])[['date', 'covid_deaths']].copy()
+    in_ = in_.groupby('date').sum().cumsum().reset_index()
+    in_.columns = ['Date', 'Deaths']
+    in_.Date = [pandas.Period(str(v), freq='D') for v in in_.Date]
+    all_dates = pandas.period_range(start='2020-03-01', end=in_.Date.max(), freq='D')
+    in_ = in_.set_index('Date').reindex(all_dates, method='ffill').fillna(0.0).reset_index()
+    in_.columns = ['Date', 'Deaths']
+    return in_
+
+
 def load_ma_data():
-    # Improve the Massachusetts data by using the DateOfDeath.csv from MA site
-    # Since the latest MA data is very incomplete, replace the most recent three days with
-    # the average from the prior five days
-    # ma = pandas.read_csv('DateOfDeath.csv').iloc[:, [0, 2, 4]]
-    # ma = pandas.read_excel('DateOfDeath.xlsx').iloc[:, [0, 2, 4]]
-    df = pandas.read_excel('covid-19-dashboard.xlsx', sheet_name='DateofDeath').iloc[:, [0, 2, 4]]
+    df = pandas.read_excel('/Users/patrick/Downloads/covid-19-dashboard.xlsx',
+                           sheet_name='DateofDeath').iloc[:, [0, 2, 4]]
     df.columns = ['Date', 'Confirmed', 'Probable']
     df['Deaths'] = df.Confirmed + df.Probable
     df.Date = [pandas.Period(str(v), freq='D') for v in df.Date]
     return df[['Date', 'Deaths']].copy()
+
+
+def load_mi_data():
+    uri = ("/Users/patrick/Downloads/"
+           "Cases_and_Deaths_by_County_and_by_Date_of_Symptom_Onset_or_by_Date_of_Death.xlsx")
+    mi = pandas.read_excel(uri, parse_dates=['Date'])
+    mi = mi.groupby('Date').sum()[['Deaths.Cumulative']].reset_index()
+    mi.columns = ['Date', 'Deaths']
+    mi.Date = [pandas.Period(str(v), freq='D') for v in mi.Date]
+    return mi
+
+
+def load_mo_data():
+    uri = ("https://results.mo.gov/t/COVID19/views/COVID-19DataforDownload/MetricsbyDateofDeath.csv")
+    mo = pandas.read_csv(uri).iloc[1:-1, :][['Dod', 'Measure Values']].copy()
+    mo.columns = ['Date', 'Deaths']
+    mo.Date = [pandas.Period(str(v), freq='D') for v in mo.Date]
+    mo = mo[mo.Date >= pandas.Period('2020-01-01', freq='D')].set_index('Date')
+    mo.Deaths = [int(x) for x in mo.Deaths]
+    mo.Deaths = mo.Deaths.cumsum()
+    all_dates = pandas.period_range(start='2020-01-01', end=mo.index[-1], freq='D')
+    mo = mo.reindex(all_dates, method='ffill').fillna(0.0).reset_index()
+    mo.columns = ['Date', 'Deaths']
+    return mo
 
 
 def load_nc_data():
@@ -305,6 +379,23 @@ def load_nc_data():
     nc = nc.set_index('Date').sort_index()
     nc['Deaths'] = nc['Measure Values'].fillna(0.0).cumsum()
     return nc.reset_index()[['Date', 'Deaths']].copy()
+
+
+def load_nv_data():
+    uri = "/Users/patrick/Downloads/Nevada Dashboard Extract.xlsx"
+    nv = pandas.read_excel(uri, sheet_name='Deaths', skiprows=2).iloc[:, [0, 1, 2]].copy()
+    nv.columns = ['Date', 'Daily', 'Deaths']
+    unknown_deaths = nv[nv.Date == 'Unknown'].Daily.iloc[0]
+    nv = nv[nv.Date != 'Unknown'].copy()
+    nv.Date = [pandas.Period(v, freq='D') for v in nv.Date]
+    nv = nv.sort_values('Date')
+    total_deaths = nv.iloc[-1, -1]
+    nv.Deaths = nv.Deaths * ((total_deaths + unknown_deaths) / total_deaths)
+    nv = nv[['Date', 'Deaths']].copy()
+    all_dates = pandas.period_range(start='2020-03-01', end=nv.Date.max(), freq='D')
+    nv = nv.set_index('Date').reindex(all_dates, method='ffill').fillna(0.0).reset_index()
+    nv.columns = ['Date', 'Deaths']
+    return nv
 
 
 def load_pa_data():
@@ -345,27 +436,25 @@ def load_tx_data():
     return df.copy()
 
 
+def load_va_data():
+    uri = ("https://data.virginia.gov/api/views/9d6i-p8gz/rows.csv?accessType=DOWNLOAD")
+    va = pandas.read_csv(uri, parse_dates=['Event Date'])[['Event Date', 'Number of Deaths']].copy()
+    va.columns = ['Date', 'Daily']
+    va = va.groupby('Date').sum().reset_index().sort_values('Date')
+    va['Deaths'] = va.Daily.cumsum()
+    va = va[['Date', 'Deaths']].copy()
+    va.Date = [pandas.Period(v, freq='D') for v in va.Date]
+    all_dates = pandas.period_range(start='2020-03-01', end=va.Date.max(), freq='D')
+    va = va.set_index('Date').reindex(all_dates, method='ffill').fillna(0.0).reset_index()
+    va.columns = ['Date', 'Deaths']
+    return va.copy()
+
+
 def replace_state_data(nyt_stats, st, state_name):
     indices = nyt_stats[nyt_stats.State == state_name].index.copy()
     spork = st.copy()
     spork.index = indices
     nyt_stats.loc[indices, 'Deaths'] = spork.Deaths
-
-
-def fix_state_data_old(st, earliest_date, latest_date,  latest_days, avg_days=5):
-    max_date = st.Date.max()
-    cutoff_date = max_date - latest_days
-    if max_date < latest_date:
-        latest_days += (latest_date - max_date).n
-        max_date = latest_date
-    st = st[(st.Date >= earliest_date) & (st.Date <= cutoff_date)]
-    st = st.set_index('Date').sort_index().copy()
-    extra_dates = pandas.period_range(end=max_date, periods=latest_days, freq='D')
-    avg_deaths = (st.loc[cutoff_date].Deaths - st.loc[cutoff_date - avg_days].Deaths) / avg_days
-    new_deaths = [st.Deaths[-1] + (avg_deaths * (i + 1)) for i in range(latest_days)]
-    st = pandas.concat([st, pandas.DataFrame(new_deaths, index=extra_dates, columns=['Deaths'])])
-    st = st.loc[:latest_date].copy()
-    return st
 
 
 def fix_state_data(st, earliest_date, latest_date,  latest_days, avg_days=10, decay=1.1):
@@ -503,9 +592,9 @@ def calc_mid_weekly_average(s):
 
     # Convert into central 7-day mean, with special handling for last three days
     specs = (
-        (7.4, numpy.array([0.9, 1.0, 1.0, 1.0, 1.3, 1.1, 1.1])),
-        (7.3, numpy.array([0.9, 0.9, 1.0, 1.0, 1.1, 1.3, 1.1])),
-        (7.2, numpy.array([0.9, 0.9, 0.9, 1.0, 1.1, 1.1, 1.3])),
+        (7.4, numpy.array([0.9, 1.0, 1.0, 1.0, 1.4, 1.1, 1.0])),
+        (7.4, numpy.array([0.8, 0.9, 1.0, 1.0, 1.1, 1.4, 1.2])),
+        (7.4, numpy.array([0.7, 0.8, 0.9, 1.0, 1.1, 1.3, 1.6])),
     )
     mid7 = trailing7.shift(-3).copy()
     dailies = daily.iloc[-7:].values
@@ -535,12 +624,12 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         ('DE', 47, '2020-07-24'),
         ('IA', 140, '2020-12-08'),
         ('IL', 123, '2020-06-08'),
-        ('IN', 11, '2020-07-03'),
+        # ('IN', 11, '2020-07-03'),
         ('LA', 40, '2020-04-14'),
         ('LA', 40, '2020-04-22'),
         ('MD', 68, '2020-04-15'),
-        ('MI', 220, '2020-06-05'),
-        ('MI', 60, '2020-09-09'),
+        # ('MI', 220, '2020-06-05'),
+        # ('MI', 60, '2020-09-09'),
         ('NJ', 1854, '2020-06-25'),
         ('NJ', 75, '2020-07-08'),
         ('NJ', -54, '2020-07-22'),
@@ -558,7 +647,7 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         ('SC', 37, '2020-07-16'),
         # ('TN', 16, '2020-06-12'),
         # ('TX', 636, '2020-07-27'),
-        ('VA', 60, '2020-09-15'),
+        # ('VA', 60, '2020-09-15'),
         ('WA', -12, '2020-06-17'),
         ('WA', 7, '2020-06-18'),
         ('WA', 30, '2020-07-24'),
