@@ -123,13 +123,11 @@ SMOOTH_CONFIGS = dict(
 # Assign states to the various smoothing strategies
 SMOOTH_MAPS = dict(
     SatSun=('ID', 'UT', ),
-    SatSunMon=('CA', 'CO', 'DE', 'IA', 'IL', 'LA', 'MT', 'NM', 'OH', 'SC', 'WV', ),
-    SunMon=('AR', 'AZ', 'HI', 'KY', 'MD', 'MN',
-       'MS', 'NE', 'NH', 'NJ', 'OK', 'OR', 'SD', 'WA', 'WI', ),
+    SatSunMon=('CA', 'CO', 'DE', 'IA', 'IL', 'LA', 'MT', 'NM', 'SC', 'WV', ),
+    SunMon=('AR', 'HI', 'KY', 'MD', 'MN', 'MS', 'NE', 'NH', 'OK', 'OR', 'SD', 'WA', 'WI', ),
     Alabama=('AL', ),
     Kansas=('KS', ),
     NewYork=('NY', ),
-    RhodeIsland=('RI', ),
     Wyoming=('WY', ),
 )
 
@@ -166,6 +164,9 @@ def load_data(earliest_date, latest_date):
         nyt_stats = nyt_stats.sort_values(['State', 'Date'])
         nyt_stats.index = list(range(len(nyt_stats)))
 
+    az = fix_state_data(load_az_data(), earliest_date, latest_date, latest_days=8)
+    replace_state_data(nyt_stats, az, 'Arizona')
+
     ct = fix_state_data(load_ct_data(), earliest_date, latest_date, latest_days=6)
     replace_state_data(nyt_stats, ct, 'Connecticut')
 
@@ -190,11 +191,20 @@ def load_data(earliest_date, latest_date):
     nc = fix_state_data(load_nc_data(), earliest_date, latest_date, latest_days=6)
     replace_state_data(nyt_stats, nc, 'North Carolina')
 
+    nj = fix_state_data(load_nj_data(), earliest_date, latest_date, latest_days=9)
+    replace_state_data(nyt_stats, nj, 'New Jersey')
+
     nv = fix_state_data(load_nv_data(), earliest_date, latest_date, latest_days=8)
     replace_state_data(nyt_stats, nv, 'Nevada')
 
+    oh = fix_state_data(load_oh_data(), earliest_date, latest_date, latest_days=10)
+    replace_state_data(nyt_stats, oh, 'Ohio')
+
     pa = fix_state_data(load_pa_data(), earliest_date, latest_date, latest_days=9)
     replace_state_data(nyt_stats, pa, 'Pennsylvania')
+
+    ri = fix_state_data(load_ri_data(), earliest_date, latest_date, latest_days=3)
+    replace_state_data(nyt_stats, ri, 'Rhode Island')
 
     tn = fix_state_data(load_tn_data(), earliest_date, latest_date, latest_days=8)
     replace_state_data(nyt_stats, tn, 'Tennessee')
@@ -225,6 +235,14 @@ def load_data(earliest_date, latest_date):
     ct_stats = ct_stats.join(meta.set_index('ST')).reset_index().sort_values(['ST', 'Date'])
 
     return latest_date, meta, nyt_stats, ct_stats
+
+
+def load_az_data():
+    uri = './DateOfDeath.xlsx'
+    az = pandas.read_excel(uri, sheet_name='Arizona', parse_dates=['Date'])
+    az = az[['Date', 'Deaths']].copy()
+    az.Date = [pandas.Period(d.date(), freq='D') for d in az.Date]
+    return az
 
 
 def load_ct_data():
@@ -316,6 +334,14 @@ def load_nc_data():
     return nc.reset_index()[['Date', 'Deaths']].copy()
 
 
+def load_nj_data():
+    uri = './DateOfDeath.xlsx'
+    nj = pandas.read_excel(uri, sheet_name='New Jersey', parse_dates=['Date'])
+    nj = nj[['Date', 'Deaths']].copy()
+    nj.Date = [pandas.Period(d.date(), freq='D') for d in nj.Date]
+    return nj
+
+
 def load_nv_data():
     uri = download_path('Nevada Dashboard Extract.xlsx')
     nv = pandas.read_excel(uri, sheet_name='Deaths', skiprows=2).iloc[:, [0, 1, 2]].copy()
@@ -333,6 +359,57 @@ def load_nv_data():
     return nv
 
 
+def load_oh_data():
+    oh = pandas.read_csv("https://coronavirus.ohio.gov/static/dashboards/COVIDSummaryData.csv", low_memory=False)
+    total_check = int((oh[oh['Onset Date'] == 'Total'].iloc[0, -2]).replace(',', ''))
+    oh = oh[['Onset Date', 'Date Of Death', 'Admission Date', 'Death Due to Illness Count']].copy()
+    oh = oh.iloc[:-1, :]
+    oh.columns = ['Onset', 'DoD', 'Admission', 'Daily']
+    oh.Daily = [int(d) for d in oh.Daily]
+    oh = oh[(oh.Daily > 0) & (oh.Daily < 10000)].copy()
+    
+    def fix_date(x):
+        if pandas.isnull(x) or (x == 'Unknown'):
+            return None
+        else:
+            return pandas.Period(x, freq='D')
+
+    oh.Onset = [fix_date(x) for x in oh.Onset]
+    oh.DoD = [fix_date(x) for x in oh.DoD]
+    oh.Admission = [fix_date(x) for x in oh.Admission]
+    oh['MaxDate'] = max(oh.DoD.dropna().max(), oh.Onset.dropna().max(), oh.Admission.dropna().max())
+
+    def calc_date_of_death(row):
+        dod = row['DoD']
+        if not pandas.isnull(dod):
+            return dod
+        onset = row['Onset']
+        admission = row['Admission']
+        max_date = row['MaxDate']
+        if onset and admission:
+            return min(max(min((onset+15), (admission+12)), admission), max_date)
+        elif onset:
+            return min(onset + 15, max_date)
+        elif admission:
+            return min(admission + 12, max_date)
+        else:
+            raise ValueError('No dates found at all!')
+
+    oh['Date'] = oh.apply(calc_date_of_death, axis=1)
+    oh = oh.groupby('Date').sum()[['Daily']].sort_index()
+    oh['Deaths'] = oh.Daily.cumsum()
+    oh = oh[['Deaths']].copy()
+    all_dates = pandas.period_range(start='2020-01-01', end=oh.index.max(), freq='D')
+    oh = oh.reindex(all_dates, method='ffill').fillna(0.0).reset_index()
+    oh.columns = ['Date', 'Deaths']
+    
+    tot_deaths = oh.iloc[-1, -1]
+    if tot_deaths != total_check:
+        print(f"Ohio has discrepancy between calculated ({tot_deaths}) and expected ({total_check}) deaths")
+
+    return oh
+
+
 def load_pa_data():
     uri = "https://data.pa.gov/api/views/fbgu-sqgp/rows.csv?accessType=DOWNLOAD&bom=true&format=true"
     df = pandas.read_csv(uri, parse_dates=['Date of Death'])
@@ -348,6 +425,20 @@ def load_pa_data():
     final = pandas.concat([df2, df]).sort_values('Date')
     final.Deaths = [float(str(x).replace(',', '')) for x in final.Deaths]
     return final
+
+
+def load_ri_data():
+    uri = download_path('COVID-19 Rhode Island Data.xlsx')
+    ri = pandas.read_excel(uri, sheet_name='Trends', parse_dates=['Date'])[['Date', 'Date of death']]
+    ri.Date = [pandas.Period(str(v), freq='D') for v in ri.Date]
+    ri = ri.sort_values('Date')
+    ri.columns = ['Date', 'Daily']
+    ri['Deaths'] = ri.Daily.cumsum()
+    ri = ri[['Date', 'Deaths']].set_index('Date')
+    all_dates = pandas.period_range(start='2020-03-01', end=ri.index.max(), freq='D')
+    ri = ri.reindex(all_dates, method='ffill').fillna(0.0).reset_index()
+    ri.columns = ['Date', 'Deaths']
+    return ri
 
 
 def load_tn_data():
@@ -551,7 +642,7 @@ def calc_state_stats(state, state_stats, meta, latest_date):
     # Correct for various jumps/dips in the reporting of death data
     STATE_DEATH_ADJUSTMENTS = (
         ('AL', -20, '2020-04-23'),
-        ('AZ', 45, '2020-05-08'),
+        # ('AZ', 45, '2020-05-08'),
         ('AR', 143, '2020-09-15'),
         ('CO', 65, '2020-04-24'),
         ('CO', -29, '2020-04-25'),
@@ -565,19 +656,19 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         ('MD', 68, '2020-04-15'),
         # ('MI', 220, '2020-06-05'),
         # ('MI', 60, '2020-09-09'),
-        ('NJ', 1854, '2020-06-25'),
-        ('NJ', 75, '2020-07-08'),
-        ('NJ', -54, '2020-07-22'),
-        ('NJ', -38, '2020-07-29'),
-        ('NJ', -25, '2020-08-05'),
-        ('NJ', -10, '2020-08-12'),
-        ('NJ', -44, '2020-08-26'),
+        # ('NJ', 1854, '2020-06-25'),
+        # ('NJ', 75, '2020-07-08'),
+        # ('NJ', -54, '2020-07-22'),
+        # ('NJ', -38, '2020-07-29'),
+        # ('NJ', -25, '2020-08-05'),
+        # ('NJ', -10, '2020-08-12'),
+        # ('NJ', -44, '2020-08-26'),
         ('NY', 608, '2020-06-30'),  # most apparently happened at least three weeks earlier
         ('NY', -113, '2020-08-06'),
         ('NY', -11, '2020-09-09'),
         ('NY', -11, '2020-09-19'),
         ('NY', -7, '2020-09-22'),
-        ('OH', 80, '2020-04-29'),
+        # ('OH', 80, '2020-04-29'),
         ('SC', 25, '2020-04-29'),
         ('SC', 37, '2020-07-16'),
         # ('TN', 16, '2020-06-12'),

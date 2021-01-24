@@ -1,13 +1,4 @@
-DateOfDeath.csv
-CasesByDate.csv
-CasesByDate.xlsx
-DateofDeath.xlsx
-Best_masks_hospitalization_all_locs.csv
-Reference_hospitalization_all_locs.csv
-Summary_stats_all_locs.csv
-Worse_hospitalization_all_locs.csv
 check_states.ipynb
 download_stuff.pdr.ipynb
 ihme_data.ipynb
-covid-19-dashboard.xlsx
 correlations.xlsx
