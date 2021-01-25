@@ -164,22 +164,22 @@ def load_data(earliest_date, latest_date):
         nyt_stats = nyt_stats.sort_values(['State', 'Date'])
         nyt_stats.index = list(range(len(nyt_stats)))
 
-    az = fix_state_data(load_az_data(), earliest_date, latest_date, latest_days=8)
+    az = fix_state_data(load_az_data(), earliest_date, latest_date, latest_days=10)
     replace_state_data(nyt_stats, az, 'Arizona')
 
-    ct = fix_state_data(load_ct_data(), earliest_date, latest_date, latest_days=6)
+    ct = fix_state_data(load_ct_data(), earliest_date, latest_date, latest_days=8)
     replace_state_data(nyt_stats, ct, 'Connecticut')
 
     fl = fix_state_data(load_fl_data(), earliest_date, latest_date, latest_days=14, decay=1.5)
     replace_state_data(nyt_stats, fl, 'Florida')
 
-    ga = fix_state_data(load_ga_data(), earliest_date, latest_date, latest_days=9)
+    ga = fix_state_data(load_ga_data(), earliest_date, latest_date, latest_days=10)
     replace_state_data(nyt_stats, ga, 'Georgia')
 
-    in_ = fix_state_data(load_in_data(), earliest_date, latest_date, latest_days=7)
+    in_ = fix_state_data(load_in_data(), earliest_date, latest_date, latest_days=8)
     replace_state_data(nyt_stats, in_, 'Indiana')
 
-    ma = fix_state_data(load_ma_data(), earliest_date, latest_date, latest_days=6)
+    ma = fix_state_data(load_ma_data(), earliest_date, latest_date, latest_days=7)
     replace_state_data(nyt_stats, ma, 'Massachusetts')
 
     mi = fix_state_data(load_mi_data(), earliest_date, latest_date, latest_days=11)
@@ -188,10 +188,10 @@ def load_data(earliest_date, latest_date):
     mo = fix_state_data(load_mo_data(), earliest_date, latest_date, latest_days=14, decay=1.5)
     replace_state_data(nyt_stats, mo, 'Missouri')
 
-    nc = fix_state_data(load_nc_data(), earliest_date, latest_date, latest_days=6)
+    nc = fix_state_data(load_nc_data(), earliest_date, latest_date, latest_days=8)
     replace_state_data(nyt_stats, nc, 'North Carolina')
 
-    nj = fix_state_data(load_nj_data(), earliest_date, latest_date, latest_days=9)
+    nj = fix_state_data(load_nj_data(), earliest_date, latest_date, latest_days=10)
     replace_state_data(nyt_stats, nj, 'New Jersey')
 
     nv = fix_state_data(load_nv_data(), earliest_date, latest_date, latest_days=8)
@@ -203,16 +203,16 @@ def load_data(earliest_date, latest_date):
     pa = fix_state_data(load_pa_data(), earliest_date, latest_date, latest_days=9)
     replace_state_data(nyt_stats, pa, 'Pennsylvania')
 
-    ri = fix_state_data(load_ri_data(), earliest_date, latest_date, latest_days=3)
+    ri = fix_state_data(load_ri_data(), earliest_date, latest_date, latest_days=6)
     replace_state_data(nyt_stats, ri, 'Rhode Island')
 
-    tn = fix_state_data(load_tn_data(), earliest_date, latest_date, latest_days=8)
+    tn = fix_state_data(load_tn_data(), earliest_date, latest_date, latest_days=9)
     replace_state_data(nyt_stats, tn, 'Tennessee')
 
-    tx = fix_state_data(load_tx_data(), earliest_date, latest_date, latest_days=9)
+    tx = fix_state_data(load_tx_data(), earliest_date, latest_date, latest_days=10)
     replace_state_data(nyt_stats, tx, 'Texas')
 
-    va = fix_state_data(load_va_data(), earliest_date, latest_date, latest_days=11)
+    va = fix_state_data(load_va_data(), earliest_date, latest_date, latest_days=12)
     replace_state_data(nyt_stats, va, 'Virginia')
 
     # Pull in the testing information from the COVID Tracking Project
@@ -313,7 +313,7 @@ def load_mi_data():
 
 def load_mo_data():
     uri = ("https://results.mo.gov/t/COVID19/views/COVID-19DataforDownload/MetricsbyDateofDeath.csv")
-    mo = pandas.read_csv(uri).iloc[1:-1, :][['Dod', 'Measure Values']].copy()
+    mo = pandas.read_csv(uri).iloc[1:-1, :][['Dod', 'Confirmed Deaths']].copy()
     mo.columns = ['Date', 'Deaths']
     mo.Date = [pandas.Period(str(v), freq='D') for v in mo.Date]
     mo = mo[mo.Date >= pandas.Period('2020-01-01', freq='D')].set_index('Date')
