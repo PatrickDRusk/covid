@@ -7,6 +7,7 @@ import zipfile
 
 import numpy
 import pandas
+import pytz
 import scipy.stats
 
 
@@ -123,9 +124,8 @@ SMOOTH_CONFIGS = dict(
 # Assign states to the various smoothing strategies
 SMOOTH_MAPS = dict(
     SatSun=('ID', 'UT', ),
-    SatSunMon=('CA', 'CO', 'DE', 'IA', 'IL', 'LA', 'MT', 'NM', 'SC', 'WV', ),
-    SunMon=('AR', 'HI', 'KY', 'MD', 'MN', 'MS', 'NE', 'NH', 'OK', 'OR', 'SD', 'WA', 'WI', ),
-    Alabama=('AL', ),
+    SatSunMon=('CA', 'CO', 'DE', 'IA', 'IL', 'LA', 'MT', 'NM', 'WV', ),
+    SunMon=('AR', 'HI', 'KY', 'MD', 'MN', 'NE', 'NH', 'OK', 'OR', 'WA', 'WI', ),
     Kansas=('KS', ),
     NewYork=('NY', ),
     Wyoming=('WY', ),
@@ -164,55 +164,70 @@ def load_data(earliest_date, latest_date):
         nyt_stats = nyt_stats.sort_values(['State', 'Date'])
         nyt_stats.index = list(range(len(nyt_stats)))
 
+    al = fix_state_data(load_al_data(), earliest_date, latest_date, latest_days=14, decay=2.0)
+    replace_state_data(nyt_stats, al, 'Alabama')
+
     az = fix_state_data(load_az_data(), earliest_date, latest_date, latest_days=10)
     replace_state_data(nyt_stats, az, 'Arizona')
 
-    ct = fix_state_data(load_ct_data(), earliest_date, latest_date, latest_days=8)
+    ct = fix_state_data(load_ct_data(), earliest_date, latest_date, latest_days=10)
     replace_state_data(nyt_stats, ct, 'Connecticut')
 
-    fl = fix_state_data(load_fl_data(), earliest_date, latest_date, latest_days=14, decay=1.5)
+    fl = fix_state_data(load_fl_data(), earliest_date, latest_date, latest_days=14, decay=2.0)
     replace_state_data(nyt_stats, fl, 'Florida')
 
-    ga = fix_state_data(load_ga_data(), earliest_date, latest_date, latest_days=10)
+    ga = fix_state_data(load_ga_data(), earliest_date, latest_date, latest_days=14, decay=2.0)
     replace_state_data(nyt_stats, ga, 'Georgia')
 
-    in_ = fix_state_data(load_in_data(), earliest_date, latest_date, latest_days=8)
+    in_ = fix_state_data(load_in_data(), earliest_date, latest_date, latest_days=10)
     replace_state_data(nyt_stats, in_, 'Indiana')
 
     ma = fix_state_data(load_ma_data(), earliest_date, latest_date, latest_days=7)
     replace_state_data(nyt_stats, ma, 'Massachusetts')
 
-    mi = fix_state_data(load_mi_data(), earliest_date, latest_date, latest_days=11)
+    mi = fix_state_data(load_mi_data(), earliest_date, latest_date, latest_days=11, decay=1.5)
     replace_state_data(nyt_stats, mi, 'Michigan')
 
-    mo = fix_state_data(load_mo_data(), earliest_date, latest_date, latest_days=14, decay=1.5)
+    mo = fix_state_data(load_mo_data(), earliest_date, latest_date, latest_days=14, decay=2.0)
     replace_state_data(nyt_stats, mo, 'Missouri')
 
-    nc = fix_state_data(load_nc_data(), earliest_date, latest_date, latest_days=8)
+    ms = fix_state_data(load_ms_data(), earliest_date, latest_date, latest_days=11)
+    replace_state_data(nyt_stats, ms, 'Mississippi')
+
+    nc = fix_state_data(load_nc_data(), earliest_date, latest_date, latest_days=10)
     replace_state_data(nyt_stats, nc, 'North Carolina')
 
-    nj = fix_state_data(load_nj_data(), earliest_date, latest_date, latest_days=10)
+    nd = fix_state_data(load_nd_data(), earliest_date, latest_date, latest_days=16, decay=3.0)
+    replace_state_data(nyt_stats, nd, 'North Dakota')
+
+    nj = fix_state_data(load_nj_data(), earliest_date, latest_date, latest_days=10, decay=1.5)
     replace_state_data(nyt_stats, nj, 'New Jersey')
 
-    nv = fix_state_data(load_nv_data(), earliest_date, latest_date, latest_days=8)
+    nv = fix_state_data(load_nv_data(), earliest_date, latest_date, latest_days=10, decay=1.5)
     replace_state_data(nyt_stats, nv, 'Nevada')
 
-    oh = fix_state_data(load_oh_data(), earliest_date, latest_date, latest_days=10)
+    oh = fix_state_data(load_oh_data(), earliest_date, latest_date, latest_days=14, decay=2.0)
     replace_state_data(nyt_stats, oh, 'Ohio')
 
-    pa = fix_state_data(load_pa_data(), earliest_date, latest_date, latest_days=9)
+    pa = fix_state_data(load_pa_data(), earliest_date, latest_date, latest_days=10)
     replace_state_data(nyt_stats, pa, 'Pennsylvania')
 
-    ri = fix_state_data(load_ri_data(), earliest_date, latest_date, latest_days=6)
+    ri = fix_state_data(load_ri_data(), earliest_date, latest_date, latest_days=10)
     replace_state_data(nyt_stats, ri, 'Rhode Island')
 
-    tn = fix_state_data(load_tn_data(), earliest_date, latest_date, latest_days=9)
+    sc = fix_state_data(load_sc_data(), earliest_date, latest_date, latest_days=12)
+    replace_state_data(nyt_stats, sc, 'South Carolina')
+
+    sd = fix_state_data(load_sd_data(), earliest_date, latest_date, latest_days=17, decay=2.0)
+    replace_state_data(nyt_stats, sd, 'South Dakota')
+
+    tn = fix_state_data(load_tn_data(), earliest_date, latest_date, latest_days=10, decay=1.5)
     replace_state_data(nyt_stats, tn, 'Tennessee')
 
-    tx = fix_state_data(load_tx_data(), earliest_date, latest_date, latest_days=10)
+    tx = fix_state_data(load_tx_data(), earliest_date, latest_date, latest_days=14, decay=2.0)
     replace_state_data(nyt_stats, tx, 'Texas')
 
-    va = fix_state_data(load_va_data(), earliest_date, latest_date, latest_days=12)
+    va = fix_state_data(load_va_data(), earliest_date, latest_date, latest_days=16)
     replace_state_data(nyt_stats, va, 'Virginia')
 
     # Pull in the testing information from the COVID Tracking Project
@@ -237,6 +252,14 @@ def load_data(earliest_date, latest_date):
     return latest_date, meta, nyt_stats, ct_stats
 
 
+def load_al_data():
+    uri = './DateOfDeath.xlsx'
+    al = pandas.read_excel(uri, sheet_name='Alabama', parse_dates=['Date'])
+    al = al[['Date', 'Deaths']].copy()
+    al.Date = [pandas.Period(d.date(), freq='D') for d in al.Date]
+    return al
+
+
 def load_az_data():
     uri = './DateOfDeath.xlsx'
     az = pandas.read_excel(uri, sheet_name='Arizona', parse_dates=['Date'])
@@ -259,16 +282,28 @@ def load_ct_data():
 
 
 def load_fl_data():
-    uri = download_path('Florida_COVID19_Case_Line_Data.csv')
-    fl = pandas.read_csv(uri, parse_dates=['EventDate'])
-    df = fl[['Died', 'EventDate']].copy()
-    df = df[df.Died.isin(('Yes', 'Recent'))][['EventDate']].copy()
-    df['Date'] = [pandas.Period(d.date(), freq='D') for d in df.EventDate]
-    df = df.groupby('Date').count().sort_index().cumsum()
-    all_dates = pandas.period_range(start='2020-01-01', end=df.index[-1], freq='D')
-    df = df.reindex(all_dates, method='ffill').fillna(0.0).reset_index()
-    df.columns = ['Date', 'Deaths']
-    return df
+    """
+    Algorithm from https://github.com/mbevand/florida-covid19-deaths-by-day
+    """
+    import requests
+
+    url = ("https://services1.arcgis.com/CY1LXxl9zlJeBuRZ/ArcGIS/rest/services/"
+           "Florida_COVID_19_Deaths_by_Day/FeatureServer/0/query?"
+           "where=ObjectId>0&objectIds=&time=&resultType=standard&outFields=*&returnIdsOnly=false"
+           "&returnUniqueIdsOnly=false&returnCountOnly=false&returnDistinctValues=false&cacheHint=false"
+           "&orderByFields=&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset="
+           "&resultRecordCount=&sqlFormat=none&f=pjson&token=")
+    # User-Agent spoofing is required, if we use the default ("python-requests/x.x.x") the server returns
+    # an empty 'features'!
+    rows = requests.get(url, headers={'User-Agent': 'curl/7.64.0'}).json()['features']
+    fl = pandas.DataFrame([row['attributes'] for row in rows])
+    fl.Date = [pandas.Period(datetime.datetime.fromtimestamp(d // 1000), freq='D') for d in fl.Date]
+    fl = fl[['Date', 'Deaths']].copy()
+    all_dates = pandas.period_range(start='2020-03-01', end=fl.Date.max(), freq='D')
+    fl = fl.set_index('Date').sort_index().reindex(all_dates, method='ffill').fillna(0.0).reset_index()
+    fl.columns = ['Date', 'Deaths']
+    fl.Deaths = fl.Deaths.cumsum()
+    return fl
 
 
 def load_ga_data():
@@ -303,7 +338,7 @@ def load_ma_data():
 
 
 def load_mi_data():
-    uri = (download_path('Cases_and_Deaths_by_County_and_by_Date_of_Symptom_Onset_or_by_Date_of_Death.xlsx'))
+    uri = (download_path('MI_Date_of_Death.xlsx'))
     mi = pandas.read_excel(uri, parse_dates=['Date'])
     mi = mi.groupby('Date').sum()[['Deaths.Cumulative']].reset_index()
     mi.columns = ['Date', 'Deaths']
@@ -313,16 +348,27 @@ def load_mi_data():
 
 def load_mo_data():
     uri = ("https://results.mo.gov/t/COVID19/views/COVID-19DataforDownload/MetricsbyDateofDeath.csv")
-    mo = pandas.read_csv(uri).iloc[1:-1, :][['Dod', 'Confirmed Deaths']].copy()
+    mo = pandas.read_csv(uri).iloc[1:-1, :]
+    col = 'Measure Values' if 'Measure Values' in mo.columns else 'Confirmed Deaths'
+    # print(mo.columns)
+    mo = mo[['Dod', 'Measure Values']].copy()
     mo.columns = ['Date', 'Deaths']
     mo.Date = [pandas.Period(str(v), freq='D') for v in mo.Date]
-    mo = mo[mo.Date >= pandas.Period('2020-01-01', freq='D')].set_index('Date')
+    mo = mo[mo.Date >= pandas.Period('2020-01-01', freq='D')].set_index('Date').sort_index()
     mo.Deaths = [int(x) for x in mo.Deaths]
     mo.Deaths = mo.Deaths.cumsum()
     all_dates = pandas.period_range(start='2020-01-01', end=mo.index[-1], freq='D')
     mo = mo.reindex(all_dates, method='ffill').fillna(0.0).reset_index()
     mo.columns = ['Date', 'Deaths']
     return mo
+
+
+def load_ms_data():
+    uri = './DateOfDeath.xlsx'
+    ms = pandas.read_excel(uri, sheet_name='Mississippi', parse_dates=['Date'])
+    ms = ms[['Date', 'Deaths']].copy()
+    ms.Date = [pandas.Period(d.date(), freq='D') for d in ms.Date]
+    return ms
 
 
 def load_nc_data():
@@ -332,6 +378,15 @@ def load_nc_data():
     nc = nc.set_index('Date').sort_index()
     nc['Deaths'] = nc['Measure Values'].fillna(0.0).cumsum()
     return nc.reset_index()[['Date', 'Deaths']].copy()
+
+
+def load_nd_data():
+    uri = "https://www.health.nd.gov/sites/www/files/documents/Files/MSS/coronavirus/charts-data/PublicUseData.csv"
+    nd = pandas.read_csv(uri, parse_dates=['Date'])[['Date', 'Total Deaths']]
+    nd = nd.groupby('Date').sum().sort_index().cumsum().reset_index()
+    nd.columns = ['Date', 'Deaths']
+    nd.Date = [pandas.Period(str(v), freq='D') for v in nd.Date]
+    return nd
 
 
 def load_nj_data():
@@ -441,6 +496,22 @@ def load_ri_data():
     return ri
 
 
+def load_sc_data():
+    uri = './DateOfDeath.xlsx'
+    sc = pandas.read_excel(uri, sheet_name='South Carolina', parse_dates=['Date'])
+    sc = sc[['Date', 'Deaths']].copy()
+    sc.Date = [pandas.Period(d.date(), freq='D') for d in sc.Date]
+    return sc
+
+
+def load_sd_data():
+    uri = './DateOfDeath.xlsx'
+    sd = pandas.read_excel(uri, sheet_name='South Dakota', parse_dates=['Date'])
+    sd = sd[['Date', 'Deaths']].copy()
+    sd.Date = [pandas.Period(d.date(), freq='D') for d in sd.Date]
+    return sd
+
+
 def load_tn_data():
     uri = ("https://www.tn.gov/content/dam/tn/health/documents/cedep/novel-coronavirus"
            "/datasets/Public-Dataset-Daily-Case-Info.XLSX")
@@ -483,7 +554,7 @@ def replace_state_data(nyt_stats, st, state_name):
     nyt_stats.loc[indices, 'Deaths'] = spork.Deaths
 
 
-def fix_state_data(st, earliest_date, latest_date,  latest_days, avg_days=10, decay=1.1):
+def fix_state_data(st, earliest_date, latest_date,  latest_days, avg_days=10, decay=1.5):
     max_date = st.Date.max()
     cutoff_date = max_date - latest_days
     if max_date < latest_date:
@@ -618,9 +689,9 @@ def calc_mid_weekly_average(s):
 
     # Convert into central 7-day mean, with special handling for last three days
     specs = (
-        (7.4, numpy.array([0.9, 1.0, 1.0, 1.0, 1.4, 1.1, 1.0])),
-        (7.4, numpy.array([0.8, 0.9, 1.0, 1.0, 1.1, 1.4, 1.2])),
-        (7.4, numpy.array([0.7, 0.8, 0.9, 1.0, 1.1, 1.3, 1.6])),
+        (7.6, numpy.array([0.8, 0.9, 1.0, 1.2, 1.5, 1.2, 1.0])),
+        (7.5, numpy.array([0.7, 0.8, 0.9, 1.0, 1.2, 1.7, 1.2])),
+        (7.1, numpy.array([0.6, 0.7, 0.8, 0.9, 1.1, 1.3, 1.7])),
     )
     mid7 = trailing7.shift(-3).copy()
     dailies = daily.iloc[-7:].values
@@ -641,7 +712,7 @@ def calc_state_stats(state, state_stats, meta, latest_date):
 
     # Correct for various jumps/dips in the reporting of death data
     STATE_DEATH_ADJUSTMENTS = (
-        ('AL', -20, '2020-04-23'),
+        # ('AL', -20, '2020-04-23'),
         # ('AZ', 45, '2020-05-08'),
         ('AR', 143, '2020-09-15'),
         ('CO', 65, '2020-04-24'),
@@ -669,8 +740,8 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         ('NY', -11, '2020-09-19'),
         ('NY', -7, '2020-09-22'),
         # ('OH', 80, '2020-04-29'),
-        ('SC', 25, '2020-04-29'),
-        ('SC', 37, '2020-07-16'),
+        # ('SC', 25, '2020-04-29'),
+        # ('SC', 37, '2020-07-16'),
         # ('TN', 16, '2020-06-12'),
         # ('TX', 636, '2020-07-27'),
         # ('VA', 60, '2020-09-15'),
