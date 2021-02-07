@@ -55,21 +55,6 @@ SMOOTH_CONFIGS = dict(
                 '2021-01-19', # MLK
             )
         ),
-    Alabama=
-        dict(
-            DaysOfWeek = ('W-SUN', 'W-MON', 'W-TUE'),
-            Holidays = (
-                '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
-                '07-03-2020', '07-04-2020', # Independence Day
-                '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
-                '2020-11-26', '2020-11-27', '2020-11-28', # Thanksgiving
-                # Alabama undertook a massive re-check of death numbers that plopped a bunch
-                # of deaths in January, particularly 1/12, but other days, too
-                '2020-12-17', '2020-12-18', '2020-12-23', '2020-12-24', '2020-12-25', '2020-12-26', # Christmas
-                '2020-12-30', '2020-12-31', '2021-01-01', '2021-01-02',
-                '2021-01-06', '2021-01-07', '2021-01-08', '2021-01-09', '2021-01-13', # New Year's
-            )
-        ),
     Kansas=
         dict(
             # Ignore the values reported on these days
@@ -95,19 +80,6 @@ SMOOTH_CONFIGS = dict(
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-11-29', '2020-11-30', '2020-12-01', # Thanksgiving
             )
         ),
-    RhodeIsland=
-        dict(
-            DaysOfWeek = ('W-SUN', 'W-MON'),
-            Holidays = (
-                '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
-                '07-03-2020', '07-04-2020', # Independence Day
-                '09-05-2020', '09-06-2020', '09-08-2020', '09-09-2020',  # Labor Day
-                '2020-11-26', '2020-11-27', '2020-11-28', '2020-12-01', # Thanksgiving
-                '2020-12-23', '2020-12-24', '2020-12-25', '2020-12-26', '2020-12-29', # Christmas
-                '2021-01-01', '2021-01-02', # New Year's
-                '2021-01-19', # MLK
-            )
-        ),
     Wyoming=
         dict(
             DaysOfWeek = (),
@@ -124,7 +96,7 @@ SMOOTH_CONFIGS = dict(
 # Assign states to the various smoothing strategies
 SMOOTH_MAPS = dict(
     SatSun=('ID', 'UT', ),
-    SatSunMon=('CA', 'CO', 'DE', 'IA', 'IL', 'LA', 'MT', 'NM', 'WV', ),
+    SatSunMon=('CA', 'CO', 'DE', 'IL', 'LA', 'MT', 'NM', 'WV', ),
     SunMon=('AR', 'HI', 'KY', 'MD', 'MN', 'NE', 'NH', 'OK', 'OR', 'WA', 'WI', ),
     Kansas=('KS', ),
     NewYork=('NY', ),
@@ -141,8 +113,7 @@ def download_path(fname):
 
 def load_data(earliest_date, latest_date):
     if not latest_date:
-        latest_date = pandas.Period((datetime.datetime.now() - datetime.timedelta(hours=19)).date(),
-                                    freq='D')
+        latest_date = pandas.Period((datetime.datetime.now() - datetime.timedelta(hours=19)).date(), freq='D')
 
     create_smooth_dates(earliest_date, latest_date)
 
@@ -164,92 +135,86 @@ def load_data(earliest_date, latest_date):
         nyt_stats = nyt_stats.sort_values(['State', 'Date'])
         nyt_stats.index = list(range(len(nyt_stats)))
 
-    al = fix_state_data(load_al_data(), earliest_date, latest_date, latest_days=14, decay=2.0)
-    replace_state_data(nyt_stats, al, 'Alabama')
-
-    az = fix_state_data(load_az_data(), earliest_date, latest_date, latest_days=10)
-    replace_state_data(nyt_stats, az, 'Arizona')
-
-    ct = fix_state_data(load_ct_data(), earliest_date, latest_date, latest_days=10)
-    replace_state_data(nyt_stats, ct, 'Connecticut')
-
-    fl = fix_state_data(load_fl_data(), earliest_date, latest_date, latest_days=14, decay=2.0)
-    replace_state_data(nyt_stats, fl, 'Florida')
-
-    ga = fix_state_data(load_ga_data(), earliest_date, latest_date, latest_days=14, decay=2.0)
-    replace_state_data(nyt_stats, ga, 'Georgia')
-
-    in_ = fix_state_data(load_in_data(), earliest_date, latest_date, latest_days=10)
-    replace_state_data(nyt_stats, in_, 'Indiana')
-
-    ma = fix_state_data(load_ma_data(), earliest_date, latest_date, latest_days=7)
-    replace_state_data(nyt_stats, ma, 'Massachusetts')
-
-    mi = fix_state_data(load_mi_data(), earliest_date, latest_date, latest_days=11, decay=1.5)
-    replace_state_data(nyt_stats, mi, 'Michigan')
-
-    mo = fix_state_data(load_mo_data(), earliest_date, latest_date, latest_days=14, decay=2.0)
-    replace_state_data(nyt_stats, mo, 'Missouri')
-
-    ms = fix_state_data(load_ms_data(), earliest_date, latest_date, latest_days=11)
-    replace_state_data(nyt_stats, ms, 'Mississippi')
-
-    nc = fix_state_data(load_nc_data(), earliest_date, latest_date, latest_days=10)
-    replace_state_data(nyt_stats, nc, 'North Carolina')
-
-    nd = fix_state_data(load_nd_data(), earliest_date, latest_date, latest_days=16, decay=3.0)
-    replace_state_data(nyt_stats, nd, 'North Dakota')
-
-    nj = fix_state_data(load_nj_data(), earliest_date, latest_date, latest_days=10, decay=1.5)
-    replace_state_data(nyt_stats, nj, 'New Jersey')
-
-    nv = fix_state_data(load_nv_data(), earliest_date, latest_date, latest_days=10, decay=1.5)
-    replace_state_data(nyt_stats, nv, 'Nevada')
-
-    oh = fix_state_data(load_oh_data(), earliest_date, latest_date, latest_days=14, decay=2.0)
-    replace_state_data(nyt_stats, oh, 'Ohio')
-
-    pa = fix_state_data(load_pa_data(), earliest_date, latest_date, latest_days=10)
-    replace_state_data(nyt_stats, pa, 'Pennsylvania')
-
-    ri = fix_state_data(load_ri_data(), earliest_date, latest_date, latest_days=10)
-    replace_state_data(nyt_stats, ri, 'Rhode Island')
-
-    sc = fix_state_data(load_sc_data(), earliest_date, latest_date, latest_days=12)
-    replace_state_data(nyt_stats, sc, 'South Carolina')
-
-    sd = fix_state_data(load_sd_data(), earliest_date, latest_date, latest_days=17, decay=2.0)
-    replace_state_data(nyt_stats, sd, 'South Dakota')
-
-    tn = fix_state_data(load_tn_data(), earliest_date, latest_date, latest_days=10, decay=1.5)
-    replace_state_data(nyt_stats, tn, 'Tennessee')
-
-    tx = fix_state_data(load_tx_data(), earliest_date, latest_date, latest_days=14, decay=2.0)
-    replace_state_data(nyt_stats, tx, 'Texas')
-
-    va = fix_state_data(load_va_data(), earliest_date, latest_date, latest_days=16)
-    replace_state_data(nyt_stats, va, 'Virginia')
-
     # Pull in the testing information from the COVID Tracking Project
-    ct_stats = pandas.read_csv('https://covidtracking.com/api/v1/states/daily.csv', low_memory=False)
-
-    # Remove territories
-    ct_stats = ct_stats[~ct_stats.state.isin(['AS', 'GU', 'MP', 'PR', 'VI'])].copy()
-    ct_stats.date = [pandas.Period(str(v)) for v in ct_stats.date]
-
-    # Choose and rename a subset of columns
-    ct_stats = ct_stats[['date', 'state', 'positive', 'negative']]
-    ct_stats.columns = ['Date', 'ST', 'Pos', 'Neg']
+    ctp_stats = load_ctp_stats()
 
     # Set the index to state and date
-    ct_stats = ct_stats[ct_stats.Date >= earliest_date]
-    ct_stats = ct_stats[ct_stats.Date <= latest_date]
-    ct_stats = ct_stats.set_index(['ST', 'Date'])
+    ctp_stats = ctp_stats[ctp_stats.Date >= earliest_date]
+    ctp_stats = ctp_stats[ctp_stats.Date <= latest_date]
+    ctp_stats = ctp_stats.set_index(['ST', 'Date'])
 
     # Pull in the statistics for states
-    ct_stats = ct_stats.join(meta.set_index('ST')).reset_index().sort_values(['ST', 'Date'])
+    ctp_stats = ctp_stats.join(meta.set_index('ST')).reset_index().sort_values(['ST', 'Date'])
 
-    return latest_date, meta, nyt_stats, ct_stats
+    dod_stats = fix_date_of_death_states(earliest_date, latest_date, nyt_stats, ctp_stats)
+
+    return latest_date, meta, nyt_stats, ctp_stats, dod_stats
+
+
+# Hospitalization shifts, earliest good data, and ignore days for date-of-death states
+ST_STATS = [('AL', 6, '2020-07-15', 35), ('AZ', 1, '2020-07-15', 25),
+            ('CT', 4, '2020-07-15', 16), ('FL', 6, '2020-07-15', 18),
+            ('GA', 7, '2020-07-15', 20), ('IA', 1, '2020-07-15', 24),
+            ('IN', 6, '2020-07-15', 26), ('MA', 0, '2020-07-15', 10),
+            ('MI', 6, '2020-07-15', 10), ('MO', 0, '2020-07-15', 55),
+            ('MS', 3, '2020-07-15', 18), ('NC', 5, '2020-07-15', 18),
+            ('ND', 0, '2020-07-15', 20), ('NJ', 5, '2020-07-15', 18),
+            ('NV', 4, '2020-07-15', 14), ('OH', 7, '2020-07-15', 47),
+            ('PA', 2, '2020-07-15', 35), ('RI', 4, '2020-07-15', 20),
+            ('SC', 2, '2020-07-25', 15), ('SD', 0, '2020-07-15', 35),
+            ('TN', 1, '2020-07-15', 20), ('TX', 3, '2020-07-15', 25),
+            ('VA', 0, '2020-07-15', 40)]
+
+
+def fix_date_of_death_states(earliest_date, latest_date, nyt_stats, ctp_stats):
+    RATIO_DAYS = 10
+
+    ctp = ctp_stats.set_index(['ST', 'Date']).sort_index()
+    
+    dod_stats = {}
+
+    for st, hosp_shift, __, ignore_days in ST_STATS:
+        deaths = eval(f'load_{st.lower()}_data')().set_index('Date')
+        deaths.columns = ['RawDeaths']
+        dates = pandas.period_range(start=deaths.index.min(), end=latest_date, freq='D')
+        deaths = deaths.reindex(dates, method='ffill')
+        deaths['RawInc'] = (deaths.RawDeaths - deaths.RawDeaths.shift())
+        deaths['Daily'] = deaths.RawInc.rolling(window=5, center=True, min_periods=1).mean()
+        deaths['Deaths'] = deaths.Daily.fillna(0).cumsum()
+        hosp = ctp.loc[st, ['Hospital']].copy()
+        hosp['Hospital5'] = hosp.Hospital.rolling(window=5, center=True, min_periods=1).mean()
+        both = deaths.join(hosp)
+
+        max_date = latest_date - ignore_days
+
+        hshifted = both.Hospital.shift(hosp_shift)
+        h = hshifted.loc[max_date-RATIO_DAYS:max_date].sum()
+        d = both.Daily.loc[max_date-RATIO_DAYS:max_date].sum()
+        hd_ratio = h / d
+
+        both['Daily7'] = both.Daily
+        both.loc[max_date:, 'Daily7'] = hshifted.loc[max_date:] / hd_ratio
+        both['Deaths7'] = both.Daily7.fillna(0).cumsum()
+
+        dod_stats[st] = both
+        # break
+
+    return dod_stats
+
+
+def load_ctp_stats():
+    # Pull in the testing information from the COVID Tracking Project
+    ctp_stats = pandas.read_csv('https://covidtracking.com/api/v1/states/daily.csv', low_memory=False)
+
+    # Remove territories
+    ctp_stats = ctp_stats[~ctp_stats.state.isin(['AS', 'GU', 'MP', 'PR', 'VI'])].copy()
+    ctp_stats.date = [pandas.Period(str(v)) for v in ctp_stats.date]
+
+    # Choose and rename a subset of columns
+    ctp_stats = ctp_stats[['date', 'state', 'positive', 'negative', 'hospitalizedCurrently']]
+    ctp_stats.columns = ['Date', 'ST', 'Pos', 'Neg', 'Hospital']
+
+    return ctp_stats
 
 
 def load_al_data():
@@ -313,6 +278,14 @@ def load_ga_data():
     df.columns = ['Date', 'Deaths']
     df.Date = [pandas.Period(str(v), freq='D') for v in df.Date]
     return df
+
+
+def load_ia_data():
+    uri = './DateOfDeath.xlsx'
+    ia = pandas.read_excel(uri, sheet_name='Iowa', parse_dates=['Date'])
+    ia = ia[['Date', 'Deaths']].copy()
+    ia.Date = [pandas.Period(d.date(), freq='D') for d in ia.Date]
+    return ia
 
 
 def load_in_data():
@@ -701,12 +674,13 @@ def calc_mid_weekly_average(s):
     return daily, mid7
 
 
-def calc_state_stats(state, state_stats, meta, latest_date):
+def calc_state_stats(state, state_stats, meta, dod_stats, latest_date):
     st = state_stats.groupby('Date').sum().sort_index().copy()
 
     st['ST'] = state
     st['RawDeaths'] = st.Deaths
     st['RawInc'] = st.Deaths - st.Deaths.shift()
+    st['Hospital5'] = st.Hospital.rolling(window=5, center=True, min_periods=1).mean()
 
     st = st.reset_index().copy()
 
@@ -719,7 +693,9 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         ('CO', -29, '2020-04-25'),
         ('DE', 67, '2020-06-23'),
         ('DE', 47, '2020-07-24'),
-        ('IA', 140, '2020-12-08'),
+        ('HI', 56, '2021-01-26'),
+        # ('IA', 140, '2020-12-08'),
+        # ('IA', 220, '2021-01-31'),
         ('IL', 123, '2020-06-08'),
         # ('IN', 11, '2020-07-03'),
         ('LA', 40, '2020-04-14'),
@@ -727,6 +703,7 @@ def calc_state_stats(state, state_stats, meta, latest_date):
         ('MD', 68, '2020-04-15'),
         # ('MI', 220, '2020-06-05'),
         # ('MI', 60, '2020-09-09'),
+        ('MT', 40, '2021-02-03'),
         # ('NJ', 1854, '2020-06-25'),
         # ('NJ', 75, '2020-07-08'),
         # ('NJ', -54, '2020-07-22'),
@@ -803,14 +780,23 @@ def calc_state_stats(state, state_stats, meta, latest_date):
     st['Tests'] = st.PosSm + st.NegSm
     st.Deaths = smooth_series(st.Deaths)
 
+    st['Daily'], st['Daily7'] = calc_mid_weekly_average(st.Deaths)
+    __, st['Daily7'] = calc_mid_weekly_average(st.Daily7.cumsum())
+    st['Deaths7'] = st.Daily7.cumsum()
+
+    if state in dod_stats:
+        foo = st.set_index('Date')
+        dod = dod_stats[state].reindex(foo.index)
+        columns = ['RawDeaths', 'RawInc', 'Daily', 'Deaths', 'Hospital', 'Hospital5', 'Daily7', 'Deaths7']
+        foo.loc[:, columns] = dod.loc[:, columns]
+        st = foo.reset_index().copy()
+
     for col in list(meta.columns):
         st[col] = meta.loc[state][col]
 
     # Prep for 7-day smoothing calculations
     st['Confirms'], st['Confirms7'] = calc_mid_weekly_average(st.Pos)
     __, st['Confirms7'] = calc_mid_weekly_average(st.Confirms7.cumsum())
-    st['Daily'], st['Deaths7'] = calc_mid_weekly_average(st.Deaths)
-    __, st['Deaths7'] = calc_mid_weekly_average(st.Deaths7.cumsum())
     st['DTests'], st['DTests7'] = calc_mid_weekly_average(st.Tests)
     __, st['DTests7'] = calc_mid_weekly_average(st.DTests7.cumsum())
 
@@ -840,7 +826,7 @@ def get_infections_df(states, meta, death_lag, ifr_start, ifr_end, ifr_breaks, i
         ifr = _calc_ifr(state, ifr_start, ifr_end, ifr_breaks) * ifr_factor
         # ifr = pandas.Series(numpy.linspace(ifr_high, ifr_low, len(state)), index=state.index)
         # Calculate the infections in the past
-        infections = state.shift(-death_lag).Deaths7 / ifr
+        infections = state.shift(-death_lag).Daily7 / ifr
         
         # Calculate the min infections based on max_confirmed_ratio
         min_infections = state.Confirms7 / max_confirmed_ratio
@@ -857,7 +843,7 @@ def get_infections_df(states, meta, death_lag, ifr_start, ifr_end, ifr_breaks, i
         ntests_factor = 1.0 if st in ['MS', 'ND', 'WA'] else (last_tests / state.DTests7.iloc[-death_lag:])
         infections.iloc[-death_lag:] = (state.Confirms7.iloc[-death_lag:] * last_ratio * ntests_factor)
 
-        state['DPerM'] = state.Deaths7 / state.Pop
+        state['DPerM'] = state.Daily7 / state.Pop
         state['NewInf'] = infections
         state['NIPerM'] = state.NewInf / state.Pop
         state['TotInf'] = infections.cumsum()
