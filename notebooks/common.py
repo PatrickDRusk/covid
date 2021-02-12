@@ -152,18 +152,18 @@ def load_data(earliest_date, latest_date):
 
 
 # Hospitalization shifts, earliest good data, and ignore days for date-of-death states
-ST_STATS = [('AL', 6, '2020-07-15', 35), ('AZ', 1, '2020-07-15', 25),
-            ('CT', 4, '2020-07-15', 16), ('FL', 6, '2020-07-15', 18),
-            ('GA', 7, '2020-07-15', 20), ('IA', 1, '2020-07-15', 24),
-            ('IN', 6, '2020-07-15', 26), ('MA', 0, '2020-07-15', 10),
-            ('MI', 6, '2020-07-15', 10), ('MO', 0, '2020-07-15', 55),
+ST_STATS = [('AL', 6, '2020-07-15', 35), ('AZ', 1, '2020-07-15', 23),
+            ('CT', 4, '2020-07-15', 20), ('FL', 6, '2020-07-15', 26),
+            ('GA', 7, '2020-07-15', 25), ('IA', 1, '2020-07-15', 30),
+            ('IN', 6, '2020-07-15', 28), ('MA', 0, '2020-07-15', 12),
+            ('MI', 6, '2020-07-15', 14), ('MO', 0, '2020-07-15', 57),
             ('MS', 3, '2020-07-15', 18), ('NC', 5, '2020-07-15', 18),
-            ('ND', 0, '2020-07-15', 20), ('NJ', 5, '2020-07-15', 18),
-            ('NV', 4, '2020-07-15', 14), ('OH', 7, '2020-07-15', 47),
-            ('PA', 2, '2020-07-15', 35), ('RI', 4, '2020-07-15', 20),
-            ('SC', 2, '2020-07-25', 15), ('SD', 0, '2020-07-15', 35),
-            ('TN', 1, '2020-07-15', 20), ('TX', 3, '2020-07-15', 25),
-            ('VA', 0, '2020-07-15', 40)]
+            ('ND', 0, '2020-07-15', 20), ('NJ', 5, '2020-07-15', 19),
+            ('NV', 4, '2020-07-15', 18), ('OH', 7, '2020-07-15', 50),
+            ('PA', 2, '2020-07-15', 39), ('RI', 4, '2020-07-15', 20),
+            ('SC', 2, '2020-07-25', 15), ('SD', 0, '2020-07-15', 38),
+            ('TN', 1, '2020-07-15', 20), ('TX', 3, '2020-07-15', 27),
+            ('VA', 0, '2020-07-15', 43)]
 
 
 def fix_date_of_death_states(earliest_date, latest_date, nyt_stats, ctp_stats):
@@ -519,31 +519,6 @@ def load_va_data():
     va.columns = ['Date', 'Deaths']
     return va.copy()
 
-
-def replace_state_data(nyt_stats, st, state_name):
-    indices = nyt_stats[nyt_stats.State == state_name].index.copy()
-    spork = st.copy()
-    spork.index = indices
-    nyt_stats.loc[indices, 'Deaths'] = spork.Deaths
-
-
-def fix_state_data(st, earliest_date, latest_date,  latest_days, avg_days=10, decay=1.5):
-    max_date = st.Date.max()
-    cutoff_date = max_date - latest_days
-    if max_date < latest_date:
-        latest_days += (latest_date - max_date).n
-        max_date = latest_date
-    st = st[(st.Date >= earliest_date) & (st.Date <= cutoff_date)]
-    st = st.set_index('Date').sort_index().copy()
-    extra_dates = pandas.period_range(end=max_date, periods=latest_days, freq='D')
-    dailies = (st.Deaths - st.Deaths.shift())[-avg_days:]
-    slope, intercept, r, p, std = scipy.stats.linregress(list(range(avg_days)), dailies.values)
-    slope_vals = numpy.linspace(slope, slope/decay, latest_days)
-    new_dailies = [(intercept + ((avg_days+i)*slope_vals[i])) for i in range(latest_days)]
-    new_deaths = [(sum(new_dailies[:i+1]) + st.Deaths[-1])  for i in range(latest_days)]
-    st = pandas.concat([st, pandas.DataFrame(new_deaths, index=extra_dates, columns=['Deaths'])])
-    st = st.loc[:latest_date].copy()
-    return st
 
 def create_smooth_dates(earliest_date, latest_date):
     sd = str(earliest_date)
