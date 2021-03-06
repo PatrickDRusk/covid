@@ -55,21 +55,6 @@ SMOOTH_CONFIGS = dict(
                 '2021-01-19', # MLK
             )
         ),
-    Kansas=
-        dict(
-            # Ignore the values reported on these days
-            DaysOfWeek = ('W-SAT', 'W-SUN', ),
-            # Also ignore these days around holidays
-            Holidays = (
-                '05-23-2020', '05-26-2020', '05-27-2020',  # Memorial Day
-                '07-03-2020', '07-04-2020', # Independence Day
-                '09-05-2020', '09-08-2020', '09-09-2020',  # Labor Day
-                '2020-11-26', '2020-11-27', '2020-11-30', '2020-12-01', # Thanksgiving
-                '2020-12-24', '2020-12-25', '2020-12-28', '2020-12-29', # Christmas
-                '2021-01-01', '2021-01-04', '2021-01-05', # New Year's
-                '2021-01-18', # MLK
-            )
-        ),
     NewYork=
         dict(
             DaysOfWeek = (),
@@ -96,9 +81,8 @@ SMOOTH_CONFIGS = dict(
 # Assign states to the various smoothing strategies
 SMOOTH_MAPS = dict(
     SatSun=('ID', 'UT', ),
-    SatSunMon=('CA', 'CO', 'DE', 'IL', 'LA', 'MT', 'NM', 'WV', ),
-    SunMon=('AR', 'HI', 'KY', 'MD', 'MN', 'NE', 'NH', 'OK', 'OR', 'WA', 'WI', ),
-    Kansas=('KS', ),
+    SatSunMon=('CA', 'CO', 'IL', 'LA', 'MT', 'NM', 'WV', ),
+    SunMon=('AR', 'HI', 'KY', 'MD', 'MN', 'NE', 'NH', 'OK', 'OR', 'WA', 'WI',),
     NewYork=('NY', ),
     Wyoming=('WY', ),
 )
@@ -152,18 +136,18 @@ def load_data(earliest_date, latest_date):
 
 
 # Hospitalization shifts, earliest good data, and ignore days for date-of-death states
-ST_STATS = [('AL', 6, '2020-07-15', 35), ('AZ', 1, '2020-07-15', 23),
-            ('CT', 4, '2020-07-15', 20), ('FL', 6, '2020-07-15', 26),
-            ('GA', 7, '2020-07-15', 25), ('IA', 1, '2020-07-15', 30),
-            ('IN', 6, '2020-07-15', 28), ('MA', 0, '2020-07-15', 12),
-            ('MI', 6, '2020-07-15', 14), ('MO', 0, '2020-07-15', 57),
+ST_STATS = [('AL', 6, '2020-07-15', 28), ('AZ', 1, '2020-07-15', 23),
+            ('CT', 4, '2020-07-15', 20), ('DE', 3, '2020-07-15', 28), ('FL', 6, '2020-07-15', 21),
+            ('GA', 7, '2020-07-15', 25), ('KS', 3, '2020-07-15', 28), ('IA', 1, '2020-07-15', 30),
+            ('IN', 6, '2020-07-15', 27), ('MA', 0, '2020-07-15', 12),
+            ('MI', 6, '2020-07-15', 14), ('MO', 0, '2020-07-15', 44),
             ('MS', 3, '2020-07-15', 18), ('NC', 5, '2020-07-15', 18),
-            ('ND', 0, '2020-07-15', 20), ('NJ', 5, '2020-07-15', 19),
-            ('NV', 4, '2020-07-15', 18), ('OH', 7, '2020-07-15', 50),
-            ('PA', 2, '2020-07-15', 39), ('RI', 4, '2020-07-15', 20),
+            ('ND', 0, '2020-07-15', 20), ('NJ', 5, '2020-07-15', 22),
+            ('NV', 4, '2020-07-15', 16), ('OH', 7, '2020-07-15', 36),
+            ('PA', 2, '2020-07-15', 30), ('RI', 4, '2020-07-15', 20),
             ('SC', 2, '2020-07-25', 15), ('SD', 0, '2020-07-15', 38),
-            ('TN', 1, '2020-07-15', 20), ('TX', 3, '2020-07-15', 27),
-            ('VA', 0, '2020-07-15', 43)]
+            ('TN', 1, '2020-07-15', 20), ('TX', 3, '2020-07-15', 25),
+            ('VA', 0, '2020-07-15', 22)]
 
 
 def fix_date_of_death_states(earliest_date, latest_date, nyt_stats, ctp_stats):
@@ -246,6 +230,21 @@ def load_ct_data():
     return ct
 
 
+def load_de_data():
+    def make_date(r):
+        dt = datetime.date(int(r['Year']), int(r['Month']), int(r['Day']))
+        return pandas.Period(dt, freq='D')
+
+    uri = ("https://myhealthycommunity.dhss.delaware.gov/locations/state/download_covid_19_data/overview")
+    raw = pandas.read_csv(uri)
+
+    df = raw[(raw['Date used'] == 'Date of death') & (raw.Unit == 'people')][['Year', 'Month', 'Day', 'Value']]
+    df['Date'] = df.apply(make_date, axis=1)
+    df = df[['Date', 'Value']]
+    df.columns = ['Date', 'Deaths']
+    return df
+
+
 def load_fl_data():
     """
     Algorithm from https://github.com/mbevand/florida-covid19-deaths-by-day
@@ -278,6 +277,14 @@ def load_ga_data():
     df.columns = ['Date', 'Deaths']
     df.Date = [pandas.Period(str(v), freq='D') for v in df.Date]
     return df
+
+
+def load_ks_data():
+    uri = './DateOfDeath.xlsx'
+    ks = pandas.read_excel(uri, sheet_name='Kansas', parse_dates=['Date'])
+    ks = ks[['Date', 'Deaths']].copy()
+    ks.Date = [pandas.Period(d.date(), freq='D') for d in ks.Date]
+    return ks
 
 
 def load_ia_data():
@@ -388,7 +395,9 @@ def load_nv_data():
 
 
 def load_oh_data():
+    tzero = pandas.Period('1899-12-31', freq='D')
     oh = pandas.read_csv("https://coronavirus.ohio.gov/static/dashboards/COVIDSummaryData.csv", low_memory=False)
+    # oh = pandas.read_csv("/Users/patrick/Downloads/COVIDSummaryData.csv", low_memory=False)
     total_check = int((oh[oh['Onset Date'] == 'Total'].iloc[0, -2]).replace(',', ''))
     oh = oh[['Onset Date', 'Date Of Death', 'Admission Date', 'Death Due to Illness Count']].copy()
     oh = oh.iloc[:-1, :]
@@ -400,7 +409,15 @@ def load_oh_data():
         if pandas.isnull(x) or (x == 'Unknown'):
             return None
         else:
-            return pandas.Period(x, freq='D')
+            try:
+                return pandas.Period(x, freq='D')
+            except:
+                x = str(x)
+                if (',' in x) and (x.endswith('.00')):
+                    x = int(x.replace(',', '')[:-3])
+                    return tzero + x
+                else:
+                    raise
 
     oh.Onset = [fix_date(x) for x in oh.Onset]
     oh.DoD = [fix_date(x) for x in oh.DoD]
@@ -415,11 +432,11 @@ def load_oh_data():
         admission = row['Admission']
         max_date = row['MaxDate']
         if onset and admission:
-            return min(max(min((onset+15), (admission+12)), admission), max_date)
+            return min(max(min((onset+13), (admission+10)), admission), max_date)
         elif onset:
-            return min(onset + 15, max_date)
+            return min(onset + 13, max_date)
         elif admission:
-            return min(admission + 12, max_date)
+            return min(admission + 10, max_date)
         else:
             raise ValueError('No dates found at all!')
 
@@ -510,12 +527,14 @@ def load_va_data():
     uri = ("https://data.virginia.gov/api/views/9d6i-p8gz/rows.csv?accessType=DOWNLOAD")
     va = pandas.read_csv(uri, parse_dates=['Event Date'])[['Event Date', 'Number of Deaths']].copy()
     va.columns = ['Date', 'Daily']
-    va = va.groupby('Date').sum().reset_index().sort_values('Date')
+    va = va.groupby('Date').sum().sort_index()
+    va = va.reset_index()
     va['Deaths'] = va.Daily.cumsum()
     va = va[['Date', 'Deaths']].copy()
     va.Date = [pandas.Period(v, freq='D') for v in va.Date]
     all_dates = pandas.period_range(start='2020-03-01', end=va.Date.max(), freq='D')
-    va = va.set_index('Date').reindex(all_dates, method='ffill').fillna(0.0).reset_index()
+    va = va.set_index('Date').reindex(all_dates, method='ffill').fillna(0.0)
+    va = va.reset_index()
     va.columns = ['Date', 'Deaths']
     return va.copy()
 
@@ -664,10 +683,11 @@ def calc_state_stats(state, state_stats, meta, dod_stats, latest_date):
         # ('AL', -20, '2020-04-23'),
         # ('AZ', 45, '2020-05-08'),
         ('AR', 143, '2020-09-15'),
+        ('CA', 750, '2021-02-24'),
         ('CO', 65, '2020-04-24'),
         ('CO', -29, '2020-04-25'),
-        ('DE', 67, '2020-06-23'),
-        ('DE', 47, '2020-07-24'),
+        # ('DE', 67, '2020-06-23'),
+        # ('DE', 47, '2020-07-24'),
         ('HI', 56, '2021-01-26'),
         # ('IA', 140, '2020-12-08'),
         # ('IA', 220, '2021-01-31'),
@@ -692,6 +712,9 @@ def calc_state_stats(state, state_stats, meta, dod_stats, latest_date):
         ('NY', -11, '2020-09-19'),
         ('NY', -7, '2020-09-22'),
         # ('OH', 80, '2020-04-29'),
+        ('OK', 20, '2021-02-27'),
+        ('OK', 25, '2021-02-28'),
+        ('OK', 25, '2021-03-01'),
         # ('SC', 25, '2020-04-29'),
         # ('SC', 37, '2020-07-16'),
         # ('TN', 16, '2020-06-12'),
