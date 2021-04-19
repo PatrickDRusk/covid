@@ -35,6 +35,7 @@ RATIO_DAYS = 14
 
 def download_path(fname):
     userroot = os.environ['HOME'] if 'HOME' in os.environ else f"{os.environ['HOMEDRIVE']}{os.environ['HOMEPATH']}"
+    userroot = "/mnt/c/Users/Patri"
     return os.path.join(userroot, 'Downloads', fname)
 
 
