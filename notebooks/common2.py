@@ -9,7 +9,7 @@ import numpy
 import pandas
 
 
-NYT_STATES = {'AK', 'HI', 'IL', 'KY', 'MD', 'NE', 'NY', 'OK', 'VT', 'WY'}
+NYT_STATES = {'AK', 'HI', 'IL', 'KY', 'MD', 'MT', 'NE', 'NY', 'OK', 'VT', 'WY'}
 
 DOD_META = [
     ('AL', 7, 28, True),   ('AR', 5, 42, False),  ('AZ', 6, 28, True),   ('CA', 4, 28, False),
@@ -19,7 +19,8 @@ DOD_META = [
     ('LA', 8, 32, False),  ('MA', 11, 7, True),   # ('MD', 10, 32, False),
     ('ME', 4, 32, False),
     ('MI', 10, 21, True),  ('MN', 11, 28, False), ('MO', 5, 35, False),   ('MS', 8, 25, True),  # TBD Put MO back to True
-    ('MT', 10, 28, False), ('NC', 6, 28, True),   ('ND', 6, 25, True),   # ('NE', 7, 28, False),
+    # ('MT', 10, 28, False),
+    ('NC', 6, 28, True),   ('ND', 6, 25, True),   # ('NE', 7, 28, False),
     ('NH', 10, 35, False), ('NJ', 10, 28, True),  ('NM', 5, 28, False),  ('NV', 10, 24, True), # ('NY', 7, 28, False),
     ('OH', 9, 21, True),   # ('OK', 4, 35, False),
     ('OR', 5, 35, False),
@@ -90,7 +91,7 @@ def load_data(earliest_date, latest_date):
     final_stats = final_stats[(final_stats.Date >= earliest_date) & (final_stats.Date <= latest_date)]
     final_stats = final_stats.set_index(['ST', 'Date'])
 
-    return latest_date, meta, final_stats
+    return latest_date, meta, final_stats, cdc_stats, hosp_stats
 
 
 def project_dod_deaths(stats):
@@ -108,6 +109,10 @@ def project_dod_deaths(stats):
         # Calculate the ratio of hospitalizations to deaths in the RATIO_DAYS before that
         h = st_df.NewHosp.shift(hosp_shift).loc[max_date - RATIO_DAYS:max_date].sum()
         d = st_df.Daily.loc[max_date - RATIO_DAYS:max_date].sum()
+        if st == 'MT':
+            print('MONTANA')
+            print(st_df.NewHosp.shift(hosp_shift).loc[max_date - RATIO_DAYS:max_date])
+            print(st_df.Daily.loc[max_date - RATIO_DAYS:max_date])
         hd_ratio = h / d
 
         old_vals = st_df.Daily.loc[max_date:last_date]
@@ -177,6 +182,13 @@ def load_hospital_stats(uri, meta, all_dates):
     df.NewPSusp = [float(str(v).replace(',', '')) for v in df.NewPSusp]
     df.TotA = [float(str(v).replace(',', '')) for v in df.TotA]
     df.TotP = [float(str(v).replace(',', '')) for v in df.TotP]
+    
+    df = df.set_index(['ST', 'Date']).sort_index().copy()
+
+    # Correcting two egregious errors
+    df.loc[('NY', '2020-12-17'), 'TotP'] = 100
+    df.loc[('TX', '2021-04-11'), 'TotP'] = 100
+       
     df['NewConf'] = df.NewAConf + df.NewPConf
     df['NewSusp'] = df.NewASusp + df.NewPSusp
     df['New'] = df.NewConf + df.NewSusp
@@ -184,7 +196,7 @@ def load_hospital_stats(uri, meta, all_dates):
     df['CurrHosp'] = df.TotA + df.TotP
 
     st_dfs = list()
-    for st, st_df in df.groupby('ST'):
+    for st, st_df in df.reset_index().groupby('ST'):
         st_df = st_df.set_index('Date').sort_index().copy()
         st_df.NewConf = st_df.NewConf.rolling(window=13, center=True, win_type='triang', min_periods=1).mean()
         st_df.NewSusp = st_df.NewSusp.rolling(window=13, center=True, win_type='triang', min_periods=1).mean()
