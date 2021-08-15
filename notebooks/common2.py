@@ -12,20 +12,20 @@ import pandas
 NYT_STATES = {'AK', 'HI', 'IL', 'KY', 'MD', 'MT', 'NE', 'NY', 'OK', 'VT', 'WY'}
 
 DOD_META = [
-    ('AL', 7, 28, True),   ('AR', 5, 42, False),  ('AZ', 6, 28, True),   ('CA', 4, 28, False),
-    ('CO', 10, 28, False), ('CT', 5, 20, True),   ('DC', 7, 32, False),  ('DE', 4, 28, True),
-    ('FL', 7, 24, True),   ('GA', 8, 30, True),   ('IA', 8, 30, True),   ('ID', 4, 28, False), # ('IL', 11, 28, False),
-    ('IN', 5, 30, True),   ('KS', 5, 35, True),  # ('KY', 8, 28, False),
-    ('LA', 8, 32, False),  ('MA', 11, 7, True),   # ('MD', 10, 32, False),
-    ('ME', 4, 32, False),
-    ('MI', 10, 21, True),  ('MN', 11, 28, False), ('MO', 5, 35, False),   ('MS', 8, 25, True),  # TBD Put MO back to True
+    ('AL', 7, 18, True),   ('AR', 5, 35, False),  ('AZ', 6, 18, True),   ('CA', 4, 28, False),
+    ('CO', 10, 28, False), ('CT', 5, 20, True),   ('DC', 7, 28, False),  ('DE', 4, 28, True),
+    ('FL', 7, 24, False),   ('GA', 8, 30, True),   ('IA', 8, 21, True),   ('ID', 4, 28, False), # ('IL', 11, 28, False),
+    ('IN', 5, 28, True),   ('KS', 5, 21, True),  # ('KY', 8, 28, False),
+    ('LA', 8, 28, False),  ('MA', 11, 5, True),   # ('MD', 10, 32, False),
+    ('ME', 4, 28, False),
+    ('MI', 10, 21, True),  ('MN', 11, 28, False), ('MO', 5, 28, True),   ('MS', 8, 21, True),  # TBD Put MO back to True
     # ('MT', 10, 28, False),
     ('NC', 6, 28, True),   ('ND', 6, 25, True),   # ('NE', 7, 28, False),
-    ('NH', 10, 35, False), ('NJ', 10, 28, True),  ('NM', 5, 28, False),  ('NV', 10, 24, True), # ('NY', 7, 28, False),
+    ('NH', 10, 28, False), ('NJ', 10, 50, True),  ('NM', 5, 28, False),  ('NV', 10, 24, True), # ('NY', 7, 28, False),
     ('OH', 9, 21, True),   # ('OK', 4, 35, False),
-    ('OR', 5, 35, False),
-    ('PA', 8, 30, True),   ('RI', 0, 20, True),   ('SC', 9, 35, True),   ('SD', 12, 38, True),
-    ('TN', 9, 25, True),   ('TX', 4, 28, True),   ('UT', 2, 32, False),  ('VA', 5, 28, True),
+    ('OR', 5, 28, False),
+    ('PA', 8, 28, True),   ('RI', 0, 20, True),   ('SC', 9, 27, True),   ('SD', 12, 21, True),
+    ('TN', 9, 25, True),   ('TX', 4, 28, True),   ('UT', 2, 28, False),  ('VA', 5, 28, True),
     ('WA', 4, 28, False),  ('WI', 4, 28, False),  ('WV', 4, 28, False),  # ('WY', 12, 28, False),
 ]
 
@@ -480,6 +480,7 @@ def load_ri_data():
     all_dates = pandas.period_range(start='2020-03-01', end=ri.index.max(), freq='D')
     ri = ri.reindex(all_dates, method='ffill').fillna(0.0).reset_index()
     ri.columns = ['Date', 'Deaths']
+    # print(ri)
     return ri
 
 
@@ -700,6 +701,7 @@ def calc_state_stats(state, state_stats, meta):
         ('MD', 68, '2020-04-15'),
         ('MD', 538, '2021-05-27'),
         ('MT', 40, '2021-02-03'),
+        ('NE', 100, '2021-05-28'),
         ('NY', 608, '2020-06-30'),  # most apparently happened at least three weeks earlier
         ('NY', -113, '2020-08-06'),
         ('NY', -11, '2020-09-09'),
