@@ -868,6 +868,9 @@ def get_infections_df(states, meta, death_lag, ifr_start, ifr_end, ifr_breaks, i
     ifr_breaks = [] if ifr_breaks is None else ifr_breaks
     new_states = []
     for st, state in states.reset_index().groupby('ST'):
+        if st in ['AS']:
+            continue
+
         state = state.set_index(['ST', 'Date']).copy()
 
         st_meta = meta.loc[st]
