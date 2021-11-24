@@ -466,6 +466,7 @@ def load_pa_data():
     df2.columns = ['Date', 'Deaths']
     final = pandas.concat([df2, df]).sort_values('Date')
     final.Deaths = [float(str(x).replace(',', '')) for x in final.Deaths]
+    final = final[final.Deaths != 0.0].copy()
     return final
 
 
@@ -712,6 +713,7 @@ def calc_state_stats(state, state_stats, meta):
         ('OK', 25, '2021-03-01'),
         ('OK', 1640, '2021-04-07'),
         ('OK', 333, '2021-05-26'),
+        ('OK', 1000, '2021-10-20'),
         ('WA', -12, '2020-06-17'),
         ('WA', 7, '2020-06-18'),
         ('WA', 30, '2020-07-24'),
