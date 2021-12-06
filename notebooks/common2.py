@@ -9,16 +9,17 @@ import numpy
 import pandas
 
 
-NYT_STATES = {'AK', 'HI', 'IL', 'KY', 'MD', 'MT', 'NE', 'NY', 'OK', 'VT', 'WY'}
+NYT_STATES = {'AK', 'DC', 'HI', 'IL', 'KY', 'MD', 'MT', 'NE', 'NY', 'OK', 'VT', 'WY'}
 
 DOD_META = [
     ('AL', 7, 18, True),   ('AR', 5, 35, False),  ('AZ', 6, 18, True),   ('CA', 4, 28, False),
-    ('CO', 10, 28, False), ('CT', 5, 20, True),   ('DC', 7, 28, False),  ('DE', 4, 28, True),
+    ('CO', 10, 28, False), ('CT', 5, 20, True),   # ('DC', 7, 28, False), 
+    ('DE', 4, 28, True),
     ('FL', 7, 24, False),   ('GA', 8, 30, True),   ('IA', 8, 21, True),   ('ID', 4, 28, False), # ('IL', 11, 28, False),
     ('IN', 5, 28, True),   ('KS', 5, 21, True),  # ('KY', 8, 28, False),
     ('LA', 8, 28, False),  ('MA', 11, 5, True),   # ('MD', 10, 32, False),
     ('ME', 4, 28, False),
-    ('MI', 10, 21, True),  ('MN', 11, 28, False), ('MO', 5, 28, True),   ('MS', 8, 21, True),  # TBD Put MO back to True
+    ('MI', 10, 21, True),  ('MN', 11, 28, False), ('MO', 5, 28, True),   ('MS', 8, 21, True),
     # ('MT', 10, 28, False),
     ('NC', 6, 28, True),   ('ND', 6, 25, True),   # ('NE', 7, 28, False),
     ('NH', 10, 28, False), ('NJ', 10, 50, True),  ('NM', 5, 28, False),  ('NV', 10, 24, True), # ('NY', 7, 28, False),
@@ -362,11 +363,13 @@ def load_mo_data():
     mo = pandas.read_csv(uri).iloc[1:-1, :]
     col = 'Measure Values' if 'Measure Values' in mo.columns else 'Confirmed Deaths'
     # print(mo.columns)
-    mo = mo[['Dod', 'Measure Values']].copy()
+    mo = mo[['Date of Death', 'Measure Values']].copy()
     mo.columns = ['Date', 'Deaths']
+    mo = mo.iloc[3:, :]
     mo.Date = [pandas.Period(str(v), freq='D') for v in mo.Date]
     mo = mo[mo.Date >= pandas.Period('2020-01-01', freq='D')].set_index('Date').sort_index()
     mo.Deaths = [int(x) for x in mo.Deaths]
+    mo = mo.reset_index().groupby('Date').sum().sort_index()
     mo.Deaths = mo.Deaths.cumsum()
     all_dates = pandas.period_range(start='2020-01-01', end=mo.index[-1], freq='D')
     mo = mo.reindex(all_dates, method='ffill').fillna(0.0).reset_index()
