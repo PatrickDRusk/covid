@@ -1,5 +1,6 @@
 import datetime
 import io
+import math
 import os
 import urllib
 import zipfile
@@ -8,28 +9,36 @@ import numpy
 import pandas
 
 
-NYT_STATES = {'AK', 'HI', 'IL', 'KY', 'MD', 'NE', 'NY', 'OK', 'VT', 'WY'}
+NYT_STATES = {'AK', 'DC', 'HI', 'IL', 'KY', 'MD', 'MT', 'NE', 'NY', 'OK', 'VT', 'WY'}
 
 DOD_META = [
-    ('AL', 7, 28, True),   ('AR', 5, 42, False),  ('AZ', 6, 28, True),   ('CA', 4, 28, False),
-    ('CO', 10, 28, False), ('CT', 5, 20, True),   ('DC', 7, 28, False),  ('DE', 4, 28, True),
-    ('FL', 7, 24, True),   ('GA', 8, 30, True),   ('IA', 8, 30, True),   ('ID', 4, 28, False), # ('IL', 11, 28, False),
-    ('IN', 5, 30, True),   ('KS', 5, 35, True),  # ('KY', 8, 28, False),
-    ('LA', 8, 28, False),  ('MA', 11, 7, True),   # ('MD', 10, 32, False),
+    ('AL', 7, 18, True),   ('AR', 5, 35, False),  ('AZ', 6, 18, True),   ('CA', 4, 28, False),
+    ('CO', 10, 28, False), ('CT', 5, 20, True),   # ('DC', 7, 28, False), 
+    ('DE', 4, 28, True),
+    ('FL', 7, 24, False),   ('GA', 8, 30, True),   ('IA', 8, 21, True),   ('ID', 4, 28, False), # ('IL', 11, 28, False),
+    ('IN', 5, 28, True),   ('KS', 5, 21, True),  # ('KY', 8, 28, False),
+    ('LA', 8, 28, False),  ('MA', 11, 5, True),   # ('MD', 10, 32, False),
     ('ME', 4, 28, False),
-    ('MI', 10, 21, True),  ('MN', 11, 28, False), ('MO', 5, 35, True),   ('MS', 8, 25, True),
-    ('MT', 10, 28, False), ('NC', 6, 28, True),   ('ND', 6, 25, True),   # ('NE', 7, 28, False),
-    ('NH', 10, 35, False), ('NJ', 10, 28, True),  ('NM', 5, 28, False),  ('NV', 10, 24, True), # ('NY', 7, 28, False),
-    ('OH', 9, 35, True),   # ('OK', 4, 35, False),
-    ('OR', 5, 35, False),
-    ('PA', 8, 30, True),   ('RI', 0, 20, True),   ('SC', 9, 35, True),   ('SD', 12, 38, True),
-    ('TN', 9, 25, True),   ('TX', 4, 28, True),   ('UT', 2, 32, False),  ('VA', 5, 28, True),
+    ('MI', 10, 21, True),  ('MN', 11, 28, False), ('MO', 5, 28, True),   ('MS', 8, 21, True),
+    # ('MT', 10, 28, False),
+    ('NC', 6, 28, True),   ('ND', 6, 25, True),   # ('NE', 7, 28, False),
+    ('NH', 10, 28, False), ('NJ', 10, 50, True),  ('NM', 5, 28, False),  ('NV', 10, 24, True), # ('NY', 7, 28, False),
+    ('OH', 9, 21, True),   # ('OK', 4, 35, False),
+    ('OR', 5, 28, False),
+    ('PA', 8, 28, True),   ('RI', 0, 20, True),   ('SC', 9, 27, True),   ('SD', 12, 21, True),
+    ('TN', 9, 25, True),   ('TX', 4, 28, True),   ('UT', 2, 28, False),  ('VA', 5, 28, True),
     ('WA', 4, 28, False),  ('WI', 4, 28, False),  ('WV', 4, 28, False),  # ('WY', 12, 28, False),
 ]
 
 DOD_STATES = {v[0] for v in DOD_META if v[3]}
 
 RATIO_DAYS = 14
+
+
+def download_path(fname):
+    userroot = os.environ['HOME'] if 'HOME' in os.environ else f"{os.environ['HOMEDRIVE']}{os.environ['HOMEPATH']}"
+    userroot = "/mnt/c/Users/Patri"
+    return os.path.join(userroot, 'Downloads', fname)
 
 
 def load_data(earliest_date, latest_date):
@@ -83,7 +92,7 @@ def load_data(earliest_date, latest_date):
     final_stats = final_stats[(final_stats.Date >= earliest_date) & (final_stats.Date <= latest_date)]
     final_stats = final_stats.set_index(['ST', 'Date'])
 
-    return latest_date, meta, final_stats
+    return latest_date, meta, final_stats, cdc_stats, hosp_stats
 
 
 def project_dod_deaths(stats):
@@ -101,6 +110,10 @@ def project_dod_deaths(stats):
         # Calculate the ratio of hospitalizations to deaths in the RATIO_DAYS before that
         h = st_df.NewHosp.shift(hosp_shift).loc[max_date - RATIO_DAYS:max_date].sum()
         d = st_df.Daily.loc[max_date - RATIO_DAYS:max_date].sum()
+        if st == 'MT':
+            print('MONTANA')
+            print(st_df.NewHosp.shift(hosp_shift).loc[max_date - RATIO_DAYS:max_date])
+            print(st_df.Daily.loc[max_date - RATIO_DAYS:max_date])
         hd_ratio = h / d
 
         old_vals = st_df.Daily.loc[max_date:last_date]
@@ -170,6 +183,13 @@ def load_hospital_stats(uri, meta, all_dates):
     df.NewPSusp = [float(str(v).replace(',', '')) for v in df.NewPSusp]
     df.TotA = [float(str(v).replace(',', '')) for v in df.TotA]
     df.TotP = [float(str(v).replace(',', '')) for v in df.TotP]
+    
+    df = df.set_index(['ST', 'Date']).sort_index().copy()
+
+    # Correcting two egregious errors
+    df.loc[('NY', '2020-12-17'), 'TotP'] = 100
+    df.loc[('TX', '2021-04-11'), 'TotP'] = 100
+       
     df['NewConf'] = df.NewAConf + df.NewPConf
     df['NewSusp'] = df.NewASusp + df.NewPSusp
     df['New'] = df.NewConf + df.NewSusp
@@ -177,7 +197,7 @@ def load_hospital_stats(uri, meta, all_dates):
     df['CurrHosp'] = df.TotA + df.TotP
 
     st_dfs = list()
-    for st, st_df in df.groupby('ST'):
+    for st, st_df in df.reset_index().groupby('ST'):
         st_df = st_df.set_index('Date').sort_index().copy()
         st_df.NewConf = st_df.NewConf.rolling(window=13, center=True, win_type='triang', min_periods=1).mean()
         st_df.NewSusp = st_df.NewSusp.rolling(window=13, center=True, win_type='triang', min_periods=1).mean()
@@ -197,6 +217,7 @@ def load_date_of_death_states(uri, meta, all_dates):
     for st, hosp_shift, ignore_days, state_provided in DOD_META:
         if not state_provided:
             continue
+        print(st)
         deaths = eval(f'load_{st.lower()}_data')().set_index('Date')
         deaths.columns = ['RawDeaths']
         deaths = deaths.reindex(all_dates, method='ffill').fillna(0.)
@@ -248,7 +269,8 @@ def load_de_data():
     uri = ("https://myhealthycommunity.dhss.delaware.gov/locations/state/download_covid_19_data/overview")
     raw = pandas.read_csv(uri)
 
-    df = raw[(raw['Date used'] == 'Date of death') & (raw.Unit == 'people')][['Year', 'Month', 'Day', 'Value']]
+    df = raw[(raw['Date used'] == 'Date of death') & (raw.Unit == 'people') & (raw.Statistic == 'Deaths')]
+    df = df[['Year', 'Month', 'Day', 'Value']].copy()
     df['Date'] = df.apply(make_date, axis=1)
     df = df[['Date', 'Value']]
     df.columns = ['Date', 'Deaths']
@@ -269,9 +291,9 @@ def load_fl_data():
            "&resultRecordCount=&sqlFormat=none&f=pjson&token=")
     # User-Agent spoofing is required, if we use the default ("python-requests/x.x.x") the server returns
     # an empty 'features'!
-    rows = requests.get(url, headers={'User-Agent': 'curl/7.64.0'}).json()['features']
+    rows = requests.get(url, headers={'User-Agent': 'curl/7.64.0'}, verify=False).json()['features']
     fl = pandas.DataFrame([row['attributes'] for row in rows])
-    fl.Date = [pandas.Period(datetime.datetime.fromtimestamp(d // 1000), freq='D') for d in fl.Date]
+    fl['Date'] = [pandas.Period(datetime.datetime.fromtimestamp(d // 1000), freq='D') for d in fl.Date1]
     fl = fl[['Date', 'Deaths']].copy()
     all_dates = pandas.period_range(start='2020-03-01', end=fl.Date.max(), freq='D')
     fl = fl.set_index('Date').sort_index().reindex(all_dates, method='ffill').fillna(0.0).reset_index()
@@ -341,11 +363,13 @@ def load_mo_data():
     mo = pandas.read_csv(uri).iloc[1:-1, :]
     col = 'Measure Values' if 'Measure Values' in mo.columns else 'Confirmed Deaths'
     # print(mo.columns)
-    mo = mo[['Dod', 'Measure Values']].copy()
+    mo = mo[['Date of Death', 'Measure Values']].copy()
     mo.columns = ['Date', 'Deaths']
+    mo = mo.iloc[3:, :]
     mo.Date = [pandas.Period(str(v), freq='D') for v in mo.Date]
     mo = mo[mo.Date >= pandas.Period('2020-01-01', freq='D')].set_index('Date').sort_index()
     mo.Deaths = [int(x) for x in mo.Deaths]
+    mo = mo.reset_index().groupby('Date').sum().sort_index()
     mo.Deaths = mo.Deaths.cumsum()
     all_dates = pandas.period_range(start='2020-01-01', end=mo.index[-1], freq='D')
     mo = mo.reindex(all_dates, method='ffill').fillna(0.0).reset_index()
@@ -363,7 +387,8 @@ def load_ms_data():
 
 def load_nc_data():
     uri = download_path('TABLE_DAILY_CASE&DEATHS_METRICS_data.csv')
-    nc = pandas.read_csv(uri, encoding='utf_16', sep='\t', parse_dates=['Date'])[['Date', 'Measure Values']]
+    # nc = pandas.read_csv(uri, encoding='utf_16', sep='\t', parse_dates=['Date'])[['Date', 'Measure Values']]
+    nc = pandas.read_csv(uri, parse_dates=['Date'])[['Date', 'Measure Values']]
     nc.Date = [pandas.Period(str(v), freq='D') for v in nc.Date]
     nc = nc.set_index('Date').sort_index()
     nc['Deaths'] = nc['Measure Values'].fillna(0.0).cumsum()
@@ -389,6 +414,19 @@ def load_nj_data():
 
 def load_nv_data():
     uri = download_path('Nevada Dashboard Extract.xlsx')
+    nv = pandas.read_excel(uri, sheet_name='Deaths').iloc[:, [0, 1, 2]].copy()
+    nv.columns = ['Date', 'Daily', 'Deaths']
+    nv.Date = [pandas.Period(v, freq='D') for v in nv.Date]
+    nv = nv.sort_values('Date')
+    nv = nv[['Date', 'Deaths']].copy()
+    all_dates = pandas.period_range(start='2020-03-01', end=nv.Date.max(), freq='D')
+    nv = nv.set_index('Date').reindex(all_dates, method='ffill').fillna(0.0).reset_index()
+    nv.columns = ['Date', 'Deaths']
+    return nv
+
+
+def load_nv_data_old():
+    uri = download_path('Nevada Dashboard Extract.xlsx')
     nv = pandas.read_excel(uri, sheet_name='Deaths', skiprows=2).iloc[:, [0, 1, 2]].copy()
     nv.columns = ['Date', 'Daily', 'Deaths']
     unknown_deaths = nv[nv.Date == 'Unknown'].Daily.iloc[0]
@@ -405,64 +443,16 @@ def load_nv_data():
 
 
 def load_oh_data():
-    tzero = pandas.Period('1899-12-31', freq='D')
-    oh = pandas.read_csv("https://coronavirus.ohio.gov/static/dashboards/COVIDSummaryData.csv", low_memory=False)
-    # oh = pandas.read_csv("/Users/patrick/Downloads/COVIDSummaryData.csv", low_memory=False)
-    total_check = int((oh[oh['Onset Date'] == 'Total'].iloc[0, -2]).replace(',', ''))
-    oh = oh[['Onset Date', 'Date Of Death', 'Admission Date', 'Death Due to Illness Count']].copy()
-    oh = oh.iloc[:-1, :]
-    oh.columns = ['Onset', 'DoD', 'Admission', 'Daily']
+    uri = "https://coronavirus.ohio.gov/static/dashboards/COVIDDeathData_CountyOfDeath.csv"
+    oh = pandas.read_csv(uri, low_memory=False)
+    oh = oh[['Date Of Death', 'Death Due To Illness Count - County Of Death']].copy()
+    oh.columns = ['Date', 'Daily']
     oh.Daily = [int(d) for d in oh.Daily]
-    oh = oh[(oh.Daily > 0) & (oh.Daily < 10000)].copy()
-
-    def fix_date(x):
-        if pandas.isnull(x) or (x == 'Unknown'):
-            return None
-        else:
-            try:
-                return pandas.Period(x, freq='D')
-            except:
-                x = str(x)
-                if (',' in x) and (x.endswith('.00')):
-                    x = int(x.replace(',', '')[:-3])
-                    return tzero + x
-                else:
-                    raise
-
-    oh.Onset = [fix_date(x) for x in oh.Onset]
-    oh.DoD = [fix_date(x) for x in oh.DoD]
-    oh.Admission = [fix_date(x) for x in oh.Admission]
-    oh['MaxDate'] = max(oh.DoD.dropna().max(), oh.Onset.dropna().max(), oh.Admission.dropna().max())
-
-    def calc_date_of_death(row):
-        dod = row['DoD']
-        if not pandas.isnull(dod):
-            return dod
-        onset = row['Onset']
-        admission = row['Admission']
-        max_date = row['MaxDate']
-        if onset and admission:
-            return min(max(min((onset + 13), (admission + 10)), admission), max_date)
-        elif onset:
-            return min(onset + 13, max_date)
-        elif admission:
-            return min(admission + 10, max_date)
-        else:
-            raise ValueError('No dates found at all!')
-
-    oh['Date'] = oh.apply(calc_date_of_death, axis=1)
+    oh = oh[(oh.Daily > 0) & (oh.Daily < 100)].copy()
+    oh.Date = [pandas.Period(x, freq='D') for x in oh.Date]
     oh = oh.groupby('Date').sum()[['Daily']].sort_index()
     oh['Deaths'] = oh.Daily.cumsum()
-    oh = oh[['Deaths']].copy()
-    all_dates = pandas.period_range(start='2020-01-01', end=oh.index.max(), freq='D')
-    oh = oh.reindex(all_dates, method='ffill').fillna(0.0).reset_index()
-    oh.columns = ['Date', 'Deaths']
-
-    tot_deaths = oh.iloc[-1, -1]
-    if tot_deaths != total_check:
-        print(f"Ohio has discrepancy between calculated ({tot_deaths}) and expected ({total_check}) deaths")
-
-    return oh
+    return oh.reset_index()[['Date', 'Deaths']].copy()
 
 
 def load_pa_data():
@@ -479,6 +469,7 @@ def load_pa_data():
     df2.columns = ['Date', 'Deaths']
     final = pandas.concat([df2, df]).sort_values('Date')
     final.Deaths = [float(str(x).replace(',', '')) for x in final.Deaths]
+    final = final[final.Deaths != 0.0].copy()
     return final
 
 
@@ -493,6 +484,7 @@ def load_ri_data():
     all_dates = pandas.period_range(start='2020-03-01', end=ri.index.max(), freq='D')
     ri = ri.reindex(all_dates, method='ffill').fillna(0.0).reset_index()
     ri.columns = ['Date', 'Deaths']
+    # print(ri)
     return ri
 
 
@@ -524,12 +516,14 @@ def load_tn_data():
 def load_tx_data():
     uri = "https://dshs.texas.gov/coronavirus/TexasCOVID19DailyCountyFatalityCountData.xlsx"
     df = pandas.read_excel(uri, skiprows=2)
-    df = df[df['County Name'] == 'Total'].copy()
+    # df = df[df['County Name'] == 'Total'].copy()
+    df = df.iloc[-1:, :].copy()
     num_cols = len(df.columns)
     df = df.iloc[0, 1:]
     index = pandas.period_range('2020-03-07', periods=len(df), freq='D')
     df = pandas.DataFrame([float(x) for x in df.values], index=index).reset_index()
     df.columns = ['Date', 'Deaths']
+    df.Deaths = df.Deaths.fillna(method='ffill').fillna(0.)
     return df.copy()
 
 
@@ -547,10 +541,6 @@ def load_va_data():
     va = va.reset_index()
     va.columns = ['Date', 'Deaths']
     return va.copy()
-
-
-def download_path(fname):
-    return os.path.join(os.environ['HOME'], 'Downloads', fname)
 
 
 def download_zipped_df(uri, fname, parse_dates=None):
@@ -613,6 +603,7 @@ SMOOTH_CONFIGS = dict(
                 '05-03-2020', '05-04-2020', '05-05-2020',
                 '05-23-2020', '05-24-2020', '05-25-2020',  # Memorial Day
                 '2020-11-26', '2020-11-27', '2020-11-28', '2020-11-29', '2020-11-30', '2020-12-01', # Thanksgiving
+                '2021-03-21', '2021-03-22', '2021-03-23',  # data processing issues in NYC
             )
         ),
     Wyoming=
@@ -631,7 +622,7 @@ SMOOTH_CONFIGS = dict(
 # Assign states to the various smoothing strategies
 SMOOTH_MAPS = dict(
     SatSun=('ID', 'UT', ),
-    SatSunMon=('CA', 'CO', 'IL', 'LA', 'MT', 'NM', 'WV', ),
+    SatSunMon=('CA', 'CO', 'IL', 'LA', 'MT', 'NM', ),
     SunMon=('AR', 'HI', 'KY', 'MD', 'MN', 'NE', 'NH', 'OK', 'OR', 'WA', 'WI',),
     NewYork=('NY', ),
     Wyoming=('WY', ),
@@ -706,10 +697,15 @@ def calc_state_stats(state, state_stats, meta):
         ('CO', -29, '2020-04-25'),
         ('HI', 56, '2021-01-26'),
         ('IL', 123, '2020-06-08'),
+        ('KY', 300, '2021-03-18'),
+        ('KY', 200, '2021-03-19'),
+        ('KY', 40, '2021-03-25'),
         ('LA', 40, '2020-04-14'),
         ('LA', 40, '2020-04-22'),
         ('MD', 68, '2020-04-15'),
+        ('MD', 538, '2021-05-27'),
         ('MT', 40, '2021-02-03'),
+        ('NE', 100, '2021-05-28'),
         ('NY', 608, '2020-06-30'),  # most apparently happened at least three weeks earlier
         ('NY', -113, '2020-08-06'),
         ('NY', -11, '2020-09-09'),
@@ -718,6 +714,9 @@ def calc_state_stats(state, state_stats, meta):
         ('OK', 20, '2021-02-27'),
         ('OK', 25, '2021-02-28'),
         ('OK', 25, '2021-03-01'),
+        ('OK', 1640, '2021-04-07'),
+        ('OK', 333, '2021-05-26'),
+        ('OK', 1000, '2021-10-20'),
         ('WA', -12, '2020-06-17'),
         ('WA', 7, '2020-06-18'),
         ('WA', 30, '2020-07-24'),
@@ -865,6 +864,76 @@ def calc_mid_weekly_average(s):
     return daily, mid7
 
 
+# noinspection DuplicatedCode
+def get_infections_df(states, meta, death_lag, ifr_start, ifr_end, ifr_breaks, incubation, infectious,
+                      max_confirmed_ratio=0.7):
+    meta = meta.set_index('ST')
+    avg_nursing = (meta.Nursing.sum() / meta.Pop.sum())
+
+    ifr_breaks = [] if ifr_breaks is None else ifr_breaks
+    new_states = []
+    for st, state in states.reset_index().groupby('ST'):
+        if st in ['AS']:
+            continue
+
+        state = state.set_index(['ST', 'Date']).copy()
+
+        st_meta = meta.loc[st]
+        st_nursing = st_meta.Nursing / st_meta.Pop
+        nursing_factor = math.sqrt(st_nursing / avg_nursing)
+        median_factor = (st_meta.Median / 38.2) ** 2
+        # nursing has 51% correlation to PFR; median has -3%, but I still think it counts for something for IFR
+        ifr_factor = ((2 * nursing_factor) + median_factor) / 3
+        print(f'{st} {nursing_factor=:.2f} {median_factor=:.2f} {ifr_factor=:.2f}')
+
+        # Calculate the IFR to apply for each day
+        ifr = _calc_ifr(state, ifr_start, ifr_end, ifr_breaks) * ifr_factor
+        # ifr = pandas.Series(numpy.linspace(ifr_high, ifr_low, len(state)), index=state.index)
+        # Calculate the infections in the past
+        infections = state.shift(-death_lag).Daily / ifr
+
+        # Calculate the min infections based on max_confirmed_ratio
+        # min_infections = state.Confirms7 / max_confirmed_ratio
+        # infections = infections.combine(min_infections, max, 0)
+
+        # Find out the ratio of hospitalizations that were detected on the last date in the past
+        last_date = infections.index[-(death_lag + 1)]
+        last_ratio = infections.loc[last_date] / (state.loc[last_date, 'CurrHosp'] + 1)
+        # last_tests = state.loc[last_date, 'DTests7']
+        # print(st, last_tests, state.DTests7.iloc[-death_lag:])
+
+        # Apply that ratio to the dates since that date,
+        infections.iloc[-death_lag:] = (state.CurrHosp.iloc[-death_lag:] * last_ratio)
+
+        state['DPerM'] = state.Daily / state.Pop
+        state['NewInf'] = infections
+        state['NIPerM'] = state.NewInf / state.Pop
+        state['TotInf'] = infections.cumsum()
+        state['ActInf'] = infections.rolling(infectious).sum().shift(incubation)
+        state['AIPer1000'] = state.ActInf / state.Pop / 1000.
+        new_states.append(state)
+
+    return pandas.concat(new_states)
+
+
+def _calc_ifr(state, ifr_start, ifr_end, ifr_breaks):
+    st, start = state.index[0]
+    spans = []
+    start_amt = ifr_start
+    for end, end_amt in ifr_breaks:
+        end = pandas.Period(end, 'D')
+        idx = pandas.period_range(start=start, end=end, freq='D')
+        spans.append(pandas.Series(numpy.linspace(start_amt, end_amt, len(idx)), index=idx).iloc[0:-1])
+        start, start_amt = end, end_amt
+
+    st, end = state.index[-1]
+    idx = pandas.period_range(start=start, end=end, freq='D')
+    spans.append(pandas.Series(numpy.linspace(start_amt, ifr_end, len(idx)), index=idx))
+    span = pandas.concat(spans)
+    span = pandas.Series(span.values, index=state.index)
+    return span
+
+
 if __name__ == '__main__':
     def __main():
         pandas.set_option('display.max_columns', 2000)
@@ -875,12 +944,39 @@ if __name__ == '__main__':
         EARLIEST_DATE = pandas.Period('2020-01-01', freq='D')
 
         # Set a latest date when the most recent days have garbage (like on or after holidays)
-        LATEST_DATE = pandas.Period('2021-03-13', freq='D')
+        LATEST_DATE = pandas.Period('2021-04-03', freq='D')
 
         latest_date, meta, all_stats = load_data(EARLIEST_DATE, LATEST_DATE)
 
         # print(all_stats)
-        print(all_stats.reset_index().groupby('Date').sum().Deaths)
+        # print(all_stats.reset_index().groupby('Date').sum().Deaths)
         # print(all_stats.reset_index().groupby('State').sum().Daily)
+
+        # Median number of days between being exposed and developing illness
+        INCUBATION = 4
+
+        # Number of days one is infectious (this isn't actually used yet)
+        INFECTIOUS = 10
+
+        # Median days in between exposure and death
+        DEATH_LAG = 19
+
+        # Here is where you set variables for IFR assumptions
+
+        # Note that this IFR represents a country-wide average on any given day, but the IFRs
+        # are actually adjusted up/down based on median age and nursing home residents per capita
+
+        # This set represents my worst case scenario (in my 95% CI interval)
+        # Start by setting the inital and final IFRs
+
+        # This is my expected scenario
+        IFR_S, IFR_E = 0.01, 0.003
+        IFR_BREAKS = [['2020-04-30', 0.0085], ['2020-07-31', 0.005], ['2020-09-15', 0.004], ['2021-01-15', 0.004]]
+
+        IFR_S_S, IFR_E_S = f'{100 * IFR_S:.1f}%', f'{100 * IFR_E:.2f}%'
+        infected_states = get_infections_df(all_stats, meta, DEATH_LAG, IFR_S, IFR_E, IFR_BREAKS, INCUBATION, INFECTIOUS)
+        EST_LINE = str(latest_date - (DEATH_LAG - 1))
+        print(f"Total infected by {latest_date}: {int(infected_states.NewInf.sum()):,}")
+
 
     __main()
