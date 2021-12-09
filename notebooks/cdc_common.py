@@ -9,31 +9,30 @@ import numpy
 import pandas
 
 
-DOD_META = [
-    ('AL', 7, 18, True),   ('AR', 5, 35, False),  ('AZ', 6, 18, True),   ('CA', 4, 28, False),
-    ('CO', 10, 28, False), ('CT', 5, 20, True),   # ('DC', 7, 28, False), 
-    ('DE', 4, 28, True),
-    ('FL', 7, 24, False),   ('GA', 8, 30, True),   ('IA', 8, 21, True),   ('ID', 4, 28, False), # ('IL', 11, 28, False),
-    ('IN', 5, 28, True),   ('KS', 5, 21, True),  # ('KY', 8, 28, False),
-    ('LA', 8, 28, False),  ('MA', 11, 5, True),   # ('MD', 10, 32, False),
-    ('ME', 4, 28, False),
-    ('MI', 10, 21, True),  ('MN', 11, 28, False), ('MO', 5, 28, True),   ('MS', 8, 21, True),
-    # ('MT', 10, 28, False),
-    ('NC', 6, 28, True),   ('ND', 6, 25, True),   # ('NE', 7, 28, False),
-    ('NH', 10, 28, False), ('NJ', 10, 50, True),  ('NM', 5, 28, False),  ('NV', 10, 24, True), # ('NY', 7, 28, False),
-    ('OH', 9, 21, True),   # ('OK', 4, 35, False),
-    ('OR', 5, 28, False),
-    ('PA', 8, 28, True),   ('RI', 0, 20, True),   ('SC', 9, 27, True),   ('SD', 12, 21, True),
-    ('TN', 9, 25, True),   ('TX', 4, 28, True),   ('UT', 2, 28, False),  ('VA', 5, 28, True),
-    ('WA', 4, 28, False),  ('WI', 4, 28, False),  ('WV', 4, 28, False),  # ('WY', 12, 28, False),
+_DOD_META = [
+    ('AK', 11, 28), ('AL', 12, 24), ('AR', 9, 28),  ('AZ', 9, 28),  ('CA', 12, 28),
+    ('CO', 10, 28), ('CT', 12, 24), ('DC', 4, 21),  ('DE', 12, 26), ('FL', 11, 24),
+    ('GA', 9, 30),  ('HI', 12, 21), ('IA', 12, 21), ('ID', 11, 28), ('IL', 12, 28),
+    ('IN', 12, 28), ('KS', 8, 21),  ('KY', 12, 28), ('LA', 11, 28), ('MA', 12, 18),
+    ('MD', 12, 28), ('ME', 11, 24), ('MI', 11, 21), ('MN', 10, 21), ('MO', 8, 28),
+    ('MS', 12, 18), ('MT', 4, 28),  ('NC', 10, 32), ('ND', 8, 18),  ('NE', 10, 28),
+    ('NH', 8, 24),  ('NJ', 12, 24), ('NM', 8, 28),  ('NV', 12, 26), ('NY', 12, 24),
+    ('OH', 11, 26), ('OK', 8, 30),  ('OR', 7, 35),  ('PA', 9, 21),  ('RI', 12, 28),  
+    ('SC', 9, 27),  ('SD', 12, 21), ('TN', 11, 21), ('TX', 12, 28), ('UT', 4, 32),
+    ('VA', 9, 28),  ('VT', 4, 28),  ('WA', 13, 28), ('WI', 11, 31), ('WV', 11, 28),
+    ('WY', 12, 28),
 ]
 
-DOD_STATES = {v[0] for v in DOD_META if v[3]}
+DOD_META = {v[0]: v[1:] for v in _DOD_META}
 
-PICKLE_FILES = False
-HOSP_SHIFT = 5
-IGNORE_DAYS = 21
-RATIO_DAYS = 14
+# These sources can take quite a while to load, so I usually download them locally (see code below)
+CDC_HOSP_URI = "https://beta.healthdata.gov/api/views/g62h-syeh/rows.csv?accessType=DOWNLOAD"
+CDC_DOD_URI = "https://data.cdc.gov/api/views/r8kw-7aab/rows.csv?accessType=DOWNLOAD"
+
+PICKLE_FILES = True
+HOSP_SHIFT = 10
+IGNORE_DAYS = 28
+RATIO_DAYS = 21
 
 
 def download_path(fname):
@@ -42,7 +41,7 @@ def download_path(fname):
     return os.path.join(userroot, 'Downloads', fname)
 
 
-def load_data(earliest_date, latest_date):
+def load_data(earliest_date, latest_date, skip_projection=False):
     earliest_date = pandas.Period(str(earliest_date), freq='D')
     if not latest_date:
         latest_date = (datetime.datetime.now() - datetime.timedelta(hours=19)).date()
@@ -67,12 +66,13 @@ def load_data(earliest_date, latest_date):
         return df
 
     # Pull in state date-of-death data from CDC and reduce it to interesting columns
-    # uri = "https://data.cdc.gov/api/views/r8kw-7aab/rows.csv?accessType=DOWNLOAD"
-    uri = download_path("cdc_dod_data.csv")
+    uri = CDC_DOD_URI
+    # uri = download_path("cdc_dod_data.csv")
     cdc_stats = handle_stats('cdc_stats', uri, load_cdc_dod_data)
 
     # Pull in the hospital information from the CDC
-    uri = download_path("cdc_hospitalization_data.csv")
+    uri = CDC_HOSP_URI
+    # uri = download_path("cdc_hospitalization_data.csv")
     hosp_stats = handle_stats('hosp_stats', uri, load_hospital_stats)
 
     all_stats_pre_hosp = cdc_stats.sort_index()
@@ -84,7 +84,7 @@ def load_data(earliest_date, latest_date):
     all_stats = all_stats.set_index(['ST', 'Date']).sort_index()
 
     # Project the recent deaths for DoD states
-    final_stats = project_dod_deaths(all_stats)
+    final_stats = all_stats if skip_projection else project_dod_deaths(all_stats)
 
     final_stats = final_stats.reset_index()
     final_stats = final_stats[(final_stats.Date >= earliest_date) & (final_stats.Date <= latest_date)]
@@ -231,7 +231,7 @@ def project_dod_deaths(stats):
         st_dfs[st] = st_df.set_index(['ST', 'Date'])
 
     for st in states:
-        hosp_shift, ignore_days = HOSP_SHIFT, IGNORE_DAYS
+        hosp_shift, ignore_days = DOD_META.get(st, (HOSP_SHIFT, IGNORE_DAYS))
         st_df = st_dfs[st].reset_index().set_index('Date')
 
         # Find the max date to keep raw data
@@ -272,7 +272,7 @@ def get_infections_df(states, meta, death_lag, ifr_start, ifr_end, ifr_breaks, i
         nursing_factor = math.sqrt(st_nursing / avg_nursing)
         median_factor = (st_meta.Median / 38.2) ** 2
         # nursing has 51% correlation to PFR; median has -3%, but I still think it counts for something for IFR
-        ifr_factor = ((2 * nursing_factor) + median_factor) / 3
+        ifr_factor = (((2 * nursing_factor) + median_factor) / 3) ** 0.5
         print(f'{st} {nursing_factor=:.2f} {median_factor=:.2f} {ifr_factor=:.2f}')
 
         # Calculate the IFR to apply for each day
