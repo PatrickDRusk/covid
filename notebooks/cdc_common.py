@@ -9,19 +9,41 @@ import numpy
 import pandas
 
 
+# _DOD_META = [
+#     ('AK', 11, 28), ('AL', 12, 24), ('AR', 9, 28),  ('AZ', 9, 28),  ('CA', 12, 28),
+#     ('CO', 10, 28), ('CT', 12, 24), ('DC', 4, 35),  ('DE', 12, 26), ('FL', 11, 24),
+#     ('GA', 9, 30),  ('HI', 12, 21), ('IA', 12, 21), ('ID', 11, 28), ('IL', 12, 28),
+#     ('IN', 12, 28), ('KS', 8, 21),  ('KY', 12, 28), ('LA', 11, 28), ('MA', 12, 18),
+#     ('MD', 12, 28), ('ME', 11, 24), ('MI', 11, 21), ('MN', 10, 21), ('MO', 8, 28),
+#     ('MS', 12, 18), ('MT', 4, 28),  ('NC', 10, 32), ('ND', 8, 18),  ('NE', 10, 28),
+#     ('NH', 8, 24),  ('NJ', 12, 24), ('NM', 8, 28),  ('NV', 12, 26), ('NY', 12, 24),
+#     ('OH', 11, 26), ('OK', 8, 30),  ('OR', 7, 35),  ('PA', 9, 21),  ('RI', 12, 28),  
+#     ('SC', 9, 27),  ('SD', 12, 21), ('TN', 11, 21), ('TX', 12, 28), ('UT', 4, 32),
+#     ('VA', 9, 28),  ('VT', 4, 28),  ('WA', 13, 28), ('WI', 11, 31), ('WV', 11, 28),
+#     ('WY', 12, 28),
+# ]
 _DOD_META = [
-    ('AK', 11, 28), ('AL', 12, 24), ('AR', 9, 28),  ('AZ', 9, 28),  ('CA', 12, 28),
-    ('CO', 10, 28), ('CT', 12, 24), ('DC', 4, 21),  ('DE', 12, 26), ('FL', 11, 24),
-    ('GA', 9, 30),  ('HI', 12, 21), ('IA', 12, 21), ('ID', 11, 28), ('IL', 12, 28),
-    ('IN', 12, 28), ('KS', 8, 21),  ('KY', 12, 28), ('LA', 11, 28), ('MA', 12, 18),
-    ('MD', 12, 28), ('ME', 11, 24), ('MI', 11, 21), ('MN', 10, 21), ('MO', 8, 28),
-    ('MS', 12, 18), ('MT', 4, 28),  ('NC', 10, 32), ('ND', 8, 18),  ('NE', 10, 28),
-    ('NH', 8, 24),  ('NJ', 12, 24), ('NM', 8, 28),  ('NV', 12, 26), ('NY', 12, 24),
-    ('OH', 11, 26), ('OK', 8, 30),  ('OR', 7, 35),  ('PA', 9, 21),  ('RI', 12, 28),  
-    ('SC', 9, 27),  ('SD', 12, 21), ('TN', 11, 21), ('TX', 12, 28), ('UT', 4, 32),
-    ('VA', 9, 28),  ('VT', 4, 28),  ('WA', 13, 28), ('WI', 11, 31), ('WV', 11, 28),
+    ('AK', 8, 35), ('AL', 12, 24), ('AR', 9, 28),  ('AZ', 6, 28),  ('CA', 12, 28),
+    ('CO', 10, 28), ('CT', 7, 24), ('DC', 9, 65),  ('DE', 11, 26), ('FL', 11, 28),
+    ('GA', 9, 30),  ('HI', 12, 21), ('IA', 12, 21), ('ID', 11, 28), ('IL', 9, 28),
+    ('IN', 10, 33), ('KS', 7, 21),  ('KY', 12, 28), ('LA', 11, 28), ('MA', 6, 18),
+    ('MD', 9, 28), ('ME', 6, 28), ('MI', 9, 28), ('MN', 9, 25), ('MO', 8, 28),
+    ('MS', 12, 21), ('MT', 7, 28),  ('NC', 10, 34), ('ND', 5, 21),  ('NE', 12, 28),
+    ('NH', 9, 24),  ('NJ', 11, 24), ('NM', 6, 31),  ('NV', 12, 26), ('NY', 10, 24),
+    ('OH', 9, 30), ('OK', 8, 30),  ('OR', 7, 35),  ('PA', 6, 28),  ('RI', 12, 28),  
+    ('SC', 9, 27),  ('SD', 9, 28), ('TN', 11, 21), ('TX', 11, 31), ('UT', 4, 32),
+    ('VA', 9, 28),  ('VT', 6, 28),  ('WA', 11, 31), ('WI', 6, 38), ('WV', 11, 28),
     ('WY', 12, 28),
 ]
+_DOD_META = [
+    ('AK', 8, 55), ('AL', 12, 36), ('AR', 10, 40),  ('AZ', 10, 44),  ('CA', 12, 52), ('CO', 12, 32), ('CT', 5, 28),
+    ('DC', 5, 78),  ('DE', 9, 32), ('FL', 8, 36), ('GA', 12, 38),  ('HI', 12, 28), ('IA', 12, 32), ('ID', 11, 36),
+    ('IL', 7, 34), ('IN', 5, 38), ('KS', 4, 24),  ('KY', 15, 36), ('LA', 12, 44), ('MA', 6, 26), ('MD', 9, 34),
+    ('ME', 6, 32), ('MI', 10, 46), ('MN', 11, 38), ('MO', 8, 45), ('MS', 12, 30), ('MT', 7, 30),  ('NC', 10, 50),
+    ('ND', 5, 28),  ('NE', 12, 38), ('NH', 12, 28),  ('NJ', 7, 28), ('NM', 12, 50),  ('NV', 12, 36), ('NY', 8, 32),
+    ('OH', 8, 38), ('OK', 4, 38),  ('OR', 8, 40),  ('PA', 5, 34),  ('RI', 8, 34),  ('SC', 12, 38),  ('SD', 8, 40),
+    ('TN', 12, 36), ('TX', 12, 36), ('UT', 4, 30), ('VA', 10, 36),  ('VT', 7, 36),  ('WA', 6, 36), ('WI', 5, 36),
+    ('WV', 12, 36), ('WY', 12, 38),]
 
 DOD_META = {v[0]: v[1:] for v in _DOD_META}
 
@@ -44,7 +66,8 @@ def download_path(fname):
 def load_data(earliest_date, latest_date, skip_projection=False):
     earliest_date = pandas.Period(str(earliest_date), freq='D')
     if not latest_date:
-        latest_date = (datetime.datetime.now() - datetime.timedelta(hours=19)).date()
+        # Don't consider the current date until after noon (Eastern)
+        latest_date = (datetime.datetime.now() - datetime.timedelta(hours=12)).date()
     latest_date = pandas.Period(str(latest_date), freq='D')
 
     all_dates = pandas.period_range(start=earliest_date, end=latest_date, freq='D')
@@ -57,6 +80,10 @@ def load_data(earliest_date, latest_date, skip_projection=False):
     def handle_stats(fname, uri, func):
         if PICKLE_FILES:
             try:
+                # If pickle files are > 14 hours old, replace them
+                ts = datetime.datetime.fromtimestamp(os.path.getmtime(download_path(f'{fname}.pickle')))
+                if (datetime.datetime.now() - ts).seconds/3600 > 14:
+                    raise FileNotFoundError()
                 df = pandas.read_pickle(download_path(f'{fname}.pickle'))
             except FileNotFoundError:
                 df = func(uri, meta, all_dates)
@@ -68,14 +95,14 @@ def load_data(earliest_date, latest_date, skip_projection=False):
     # Pull in state date-of-death data from CDC and reduce it to interesting columns
     uri = CDC_DOD_URI
     # uri = download_path("cdc_dod_data.csv")
-    cdc_stats = handle_stats('cdc_stats', uri, load_cdc_dod_data)
+    dod_stats = handle_stats('dod_stats', uri, load_cdc_dod_data)
 
     # Pull in the hospital information from the CDC
     uri = CDC_HOSP_URI
     # uri = download_path("cdc_hospitalization_data.csv")
     hosp_stats = handle_stats('hosp_stats', uri, load_hospital_stats)
 
-    all_stats_pre_hosp = cdc_stats.sort_index()
+    all_stats_pre_hosp = dod_stats.sort_index()
     all_stats = pandas.concat([all_stats_pre_hosp, hosp_stats], axis=1)
     all_stats = all_stats.join(meta.set_index('ST'))
 
@@ -90,7 +117,7 @@ def load_data(earliest_date, latest_date, skip_projection=False):
     final_stats = final_stats[(final_stats.Date >= earliest_date) & (final_stats.Date <= latest_date)]
     final_stats = final_stats.set_index(['ST', 'Date'])
 
-    return latest_date, meta, final_stats, cdc_stats, hosp_stats
+    return latest_date, meta, final_stats, dod_stats, hosp_stats
 
 
 def load_cdc_dod_data(uri, meta, all_dates):
@@ -164,7 +191,7 @@ def load_cdc_dod_data(uri, meta, all_dates):
             both_df['ST'] = 'NY'
             d = both_df.set_index(['ST', 'Date']).copy()
 
-        d.Daily = d.Daily.rolling(window=13, center=True, win_type='triang', min_periods=1).mean()
+        d.Daily = d.Daily.rolling(window=9, center=True, win_type='triang', min_periods=1).mean()
         d['Deaths'] = d.Daily.cumsum()
         st_dfs.append(d)
     dod_df = pandas.concat(st_dfs).sort_index()
@@ -212,13 +239,13 @@ def load_hospital_stats(uri, meta, all_dates):
     st_dfs = list()
     for st, st_df in df.reset_index().groupby('ST'):
         st_df = st_df.set_index('Date').sort_index().copy()
-        st_df.NewConf = st_df.NewConf.rolling(window=13, center=True, win_type='triang', min_periods=1).mean()
-        st_df.NewSusp = st_df.NewSusp.rolling(window=13, center=True, win_type='triang', min_periods=1).mean()
+        st_df.NewConf = st_df.NewConf.rolling(window=9, center=True, win_type='triang', min_periods=1).mean()
+        st_df.NewSusp = st_df.NewSusp.rolling(window=9, center=True, win_type='triang', min_periods=1).mean()
         st_df.New = st_df.New.rolling(window=13, center=True, win_type='triang', min_periods=1).mean()
-        st_df.NewHosp = st_df.NewHosp.rolling(window=13, center=True, win_type='triang', min_periods=1).mean()
-        # st_df.NewHosp = st_df.NewHosp.rolling(window=13, center=True, win_type='triang', min_periods=1).mean()
-        st_df.CurrHosp = st_df.CurrHosp.rolling(window=13, center=True, win_type='triang', min_periods=1).mean()
-        st_dfs.append(st_df.reset_index().set_index(['ST', 'Date'])[['NewHosp', 'CurrHosp']])
+        st_df.NewHosp = st_df.NewHosp.rolling(window=9, center=True, win_type='triang', min_periods=1).mean()
+        # st_df.NewHosp = st_df.NewHosp.rolling(window=9, center=True, win_type='triang', min_periods=1).mean()
+        st_df.CurrHosp = st_df.CurrHosp.rolling(window=9, center=True, win_type='triang', min_periods=1).mean()
+        st_dfs.append(st_df.reset_index().set_index(['ST', 'Date'])[['NewConf', 'NewHosp', 'CurrHosp']])
 
     return pandas.concat(st_dfs).sort_index()
 
@@ -300,6 +327,8 @@ def get_infections_df(states, meta, death_lag, ifr_start, ifr_end, ifr_breaks, i
         state['TotInf'] = infections.cumsum()
         state['ActInf'] = infections.rolling(infectious).sum().shift(incubation)
         state['AIPer1000'] = state.ActInf / state.Pop / 1000.
+        state['NHospPerM'] = state.NewHosp / state.Pop
+        state['CHospPerM'] = state.CurrHosp / state.Pop
         new_states.append(state)
 
     return pandas.concat(new_states)
